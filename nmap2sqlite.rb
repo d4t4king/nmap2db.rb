@@ -16,6 +16,7 @@
 #	TODO:
 #		* Specify database file (create schema, if it doesn't exist)
 #		* Add help
+#		* check if scan data already exists in DB
 #
 ###############################################################################
 
