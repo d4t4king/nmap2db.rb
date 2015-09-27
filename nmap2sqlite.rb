@@ -69,9 +69,25 @@ sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr,
 
 puts "SQL1: #{sql1}".yellow
 
-db.execute(sql1)
-
-puts "Scan record inserted."
+begin
+	db.execute(sql1)
+	puts "Scan record inserted."
+rescue
+	SQLite3::SQLException => sqle
+	case sqle.message
+	when /no such table/
+		puts "Looks like the database file doesn't exist, or the schema hasn't been committed."
+		puts "Would you like to create it now?"
+		ans = gets
+		if ans =~ /[Yy](?:es)?/
+			puts "This is where we would build the database."
+		else
+			puts "Very well.  Quitting."
+		end
+	else
+		raise sqle
+	end
+end
 
 sid = ''
 db.execute("SELECT sid FROM nmap WHERE args='#{nmap.session.scan_args}' and starttime='#{nmap.session.start_time}' and endtime='#{nmap.session.stop_time}'") do |r|
