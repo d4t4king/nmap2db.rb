@@ -33,102 +33,274 @@ opts = GetoptLong.new(
 )
 
 input = ''
-database = 'nmap_scans.db'
+@database = 'nmap_scans.db'
 opts.each do |opt,arg|
 	case opt
 	when '--input'
 		input = arg
 	when '--database'
-		database = arg
+		@database = arg
 	end
 end
 
-def create_database( db_file = 'nmap_scans.db' )
-	if File.exists?(db_file)
-		# file exists, schema must not
+def usage(noexit=false) 
+	puts <<-EOS
+
+$0 [-i|--input] <input file> [-d|--database] <path/to/databaxe/file>
+
+-i|--input			Specifies the full path to the nmap XML input file.
+-d|--database			Specifies the full path to the database to be creted/updated.
+
+
+EOS
+	unless noexit
+		exit 1
+	end
+end
+
+puts <<-EOS
+
+################
+# Input file:		#{input}
+# Database file:	#{@database}
+################
+
+EOS
+
+def create_nmap_table( db_file = @database )
+	db = SQLite3::Database.new(db_file)
+	notable = false
+	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='nmap'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		notable = true
+	elsif r[0] == "nmap"
+		puts "nmap table exists".blue
+		return 0
 	else
-		# file doesn't exist
+		puts "Unexpected result:".red
+		pp r
+		puts
+		return -1
+	end
+
+	if (notable)
+		print "Creating the nmap table....".yellow
+		rtv = db.execute("CREATE TABLE nmap (sid INTEGER PRIMARY KEY AUTOINCREMENT, version TEXT, xmlversion TEXT, args TEXT, types TEXT, starttime INTEGER, startstr TEXT, endtime INTEGER, endstr TEXT, numservices INTEGER)")
+		puts "|#{rtv.length.to_s}|#{$!}|".red
+	else
+		puts "We shouldn't be here....ever.".blue.on_white.blink
+		pp notable
+	end
+end
+
+def create_hosts_table( db_file = @database )
+	db = SQLite3::Database.new(db_file)
+	notable = false
+	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='hosts'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		notable = true
+	elsif r[0] == "hosts"
+		puts "hosts table exists".blue
+		return 0
+	else
+		puts "Unexpected result:".red
+		pp r
+		puts
+		return -1
+	end
+
+	if (notable)
+		print "Creating the hosts table...".yellow
+		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, staus TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
+		puts "|#{rtv.length.to_s}|#{$!}|".red
+	else
+		puts "We shouldn't be here....ever.".blue.on_white.blink
+		pp notable
+	end
+end
+
+def create_seq_table( db_file = @database )
+	db = SQLite3::Database.new(db_file)
+	notable = false
+	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sequencing'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		notable = true
+	elsif r[0] == "sequencing"
+		puts "sequencing table exists".blue
+		return 0
+	else
+		puts "Unexpected result:".red
+		pp r
+		puts
+		return -1
+	end
+
+	if (notable)
+		print "Creating the sequencing table...".yellow
+		rtv = db.execute("CREATE TABLE sequencing (hid INTEGER, tcpclass TEXT, tcpindex TEXT, tcpvalues TEXT, ipclass TEXT, ipvalues TEXT, tcptclass TEXT, tcptvalues TEXT)")
+		puts "|#{rtv.length.to_s}|#{$!}|".red
+	else
+		puts "We shouldn't be here....ever.".blue.on_white.blink
+		pp notable
+	end
+end
+
+def create_ports_table( db_file = @database )
+	db = SQLite3::Database.new(db_file)
+	notable = false
+	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ports'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		notable = true
+	elsif r[0] == "ports"
+		puts "ports table exists".blue
+		return 0
+	else
+		puts "Unexpected result:".red
+		pp r
+		puts
+		return -1
+	end
+
+	if (notable)
+		print "Creating the ports table...".yellow
+		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, vesion TEXT, extra TEXT, confidenxe INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
+		puts "|#{rtv.length.to_s}|#{$!}|".red
+	else
+		puts "We shouldn't be here....ever.".blue.on_white.blink
+		pp notable
+	end
+end
+
+def create_os_table( db_file = @database )
+	db = SQLite3::Database.new(db_file)
+	notable = false
+	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='os'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		notable = true
+	elsif r[0] == "os"
+		puts "os table exists".blue
+		return 0
+	else
+		puts "Unexpected result:".red
+		pp r
+		puts
+		return -1
+	end
+
+	if (notable)
+		print "Creating the os table...".yellow
+		rtv = db.execute("CREATE TABLE os(hid INTEGER, name TEXT, family TEXT, generation TEXT, type TEXT, vendor TEXT, accuracy INTEGER)")
+		puts "|#{rtv.length.to_s}|#{$!}|".red
+	else
+		puts "We shouldn't be here....ever.".blue.on_white.blink
+		pp notable
+	end
+end
+
+def create_database( _db_file = @database )
+	create_nmap_table(_db_file)
+
+	create_hosts_table(_db_file)
+
+	create_seq_table(_db_file)
+
+	create_ports_table(_db_file)
+
+	create_os_table(_db_file)
+end
+
+def check_scan_record(_args, _starttime, _endtime)
+	db = SQLite3::Database.new(@database)
+	r = db.execute("SELECT sid FROM nmap WHERE args='#{_args}' AND starttime='#{_starttime}' AND endtime='#{_endtime}'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		# no record exists
+		return false
+	else
+		# a scan already exists,
+		# so return the sid
+		return r[0]
+	end
+end
+
+def check_host_record(_ip4, _ip6, _mac, _hostname)
+	db = SQLite3::Database.new(@database)
+	r = db.execute("SELECT hid FROM hosts WHERE ip4='#{_ip4}' AND ip6='#{_ip6}' AND mac='#{_mac}' AND hostname='#{_hostname}'")
+	r.flatten!
+	if r[0].nil? || r[0] == ""
+		# no record exists
+		return false
+	else
+		# a host already exists,
+		# so return the hid
+		return r[0]
 	end
 end
 
 nmap = Nmap::Parser.new
-begin
-	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
-		nmap.parsefile(input)
+if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+	nmap.parsefile(input)
+else
+	usage(true)
+	if !File.exists?(input)
+		raise "Input file (#{input}) doesn't exist or not specified.  Nothing to do."
+	elsif File.directory?(input)
+		raise "Input file (#{input}) appears to be a directory.  I don't know how to handle those (yet)."
+	elsif File.zero?(input)
+		raise "Input file (#{input}) appears to be zero (0) bytes.  Nothing to do."
 	else
-		if !File.exists?(input)
-			raise "Input file (#{input}) doesn't appear to exist.  Nothing to do."
-		elsif File.directory?(input)
-			raise "Input file (#{input}) appears to be a directory.  I don't know how to handle those (yet)."
-		elsif File.zero?(input)
-			raise "Input file (#{input}) appears to be zero (0) bytes.  Nothing to do."
-		else
-			raise "Unhandled error for input file (#{input})."
-		end
+		raise "Unhandled error for input file (#{input})."
 	end
-rescue StandardError => se
-	raise se
 end
 
-db = SQLite3::Database.new(database)
+create_database(@database)
+
+db = SQLite3::Database.new(@database)
 
 # start with the basics -- log it all
-sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
-
-puts "SQL1: #{sql1}".yellow
-
-begin
-	db.execute(sql1)
-	puts "Scan record inserted."
-rescue SQLite3::SQLException => sqle
-	case sqle.message
-	when /no such table/
-		puts "Looks like the database file doesn't exist, or the schema hasn't been committed."
-		puts "Would you like to create it now?"
-		ans = gets
-		if ans =~ /[Yy](?:es)?/
-			puts "This is where we would build the database."
-		else
-			puts "Very well.  Quitting."
-		end
-	else
-		raise sqle
-	end
-end
-
-sid = ''
-db.execute("SELECT sid FROM nmap WHERE args='#{nmap.session.scan_args}' and starttime='#{nmap.session.start_time}' and endtime='#{nmap.session.stop_time}'") do |r|
-	if r.is_a?(Array)
-		sid = r[0]
-	else				# if it's not an array, assume it's a string
-		r.chomp!
-		sid = r
-	end
+sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
+#pp sid
+if sid.is_a?(Integer) && sid > 0
+	puts "Record already exists.  SID = '#{sid}'"
+else
+	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
+	puts "SQL1: #{sql1}".yellow
+	rtv = db.execute(sql1)
+	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
 
 nmap.hosts do |host|
-	sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
-		udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
-		'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
-		'#{host.getports(:tcp).length.to_s}', '#{host.getports(:udp).length.to_s}', 
-		'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
-		'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
-		'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
-
-	puts "SQL2: #{sql2}".red
-
-	db.execute(sql2)
-
-	puts "Host record inserted."
-
-	hid = ''
-	db.execute("SELECT hid FROM hosts WHERE ip4='#{host.ip4_addr}' and status='#{host.status}' and tcpcount='#{host.getports(:tcp).length.to_s}'") do |r|
-		if r.is_a?(Array)
-			hid = r[0]
-		else			# if it's not an array, assume it's a string
-			r.chomp!
-			hid = r
+	hid = check_host_record(host.ip4, host.ip6, host.mac_addr, host.hostname)
+	if hid.is_a?(Integer) && hid > 0
+		puts "Host exists.  Checking scan..."
+		rtv = db.execute("SELECT sid FROM hosts WHERE hid='#{hid}'")
+		rtv.flatten!
+		if rtv.is_a?(Array) && rtv.length > 1
+			puts "There is more than one scan record for this host."
+		elsif rtv.is_a?(Array) && rtv.length == 1 && rtv[0].is_a?(Integer)
+			puts "Only one scan already for this host."
+			if rtv[0] == sid
+				puts "Same scan"
+			else
+				puts "New scan for host."
+			end
 		end
+	else
+		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
+			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
+			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
+			'#{host.getports(:tcp).length.to_s}', '#{host.getports(:udp).length.to_s}', 
+			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
+			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
+			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
+		puts "SQL2: #{sql2}".red
+		db.execute(sql2)
+		puts "Host record inserted."
 	end
 
 	sql3 = %{INSERT INTO sequencing (hid, tcpclass, tcpindex, tcpvalues,
