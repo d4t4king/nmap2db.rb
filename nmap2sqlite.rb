@@ -113,7 +113,7 @@ def create_hosts_table( db_file = @database )
 
 	if (notable)
 		print "Creating the hosts table...".yellow
-		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, staus TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
+		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, status TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
 		puts "|#{rtv.length.to_s}|#{$!}|".red
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
@@ -167,7 +167,7 @@ def create_ports_table( db_file = @database )
 
 	if (notable)
 		print "Creating the ports table...".yellow
-		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, vesion TEXT, extra TEXT, confidenxe INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
+		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, version TEXT, extra TEXT, confidence INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
 		puts "|#{rtv.length.to_s}|#{$!}|".red
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
@@ -228,9 +228,15 @@ def check_scan_record(_args, _starttime, _endtime)
 	end
 end
 
-def check_host_record(_ip4, _ip6, _mac, _hostname)
+def check_host_record(_ip4, _ip6, _mac, _hostname, *_sid)
 	db = SQLite3::Database.new(@database)
-	r = db.execute("SELECT hid FROM hosts WHERE ip4='#{_ip4}' AND ip6='#{_ip6}' AND mac='#{_mac}' AND hostname='#{_hostname}'")
+	r = ''
+	if _sid
+		r = db.execute("SELECT hid FROM hosts WHERE ip4='#{_ip4}' AND ip6='#{_ip6}' AND mac='#{_mac}' AND hostname='#{_hostname}' AND sid='#{_sid}'")
+		pp r
+	else
+		r = db.execute("SELECT hid FROM hosts WHERE ip4='#{_ip4}' AND ip6='#{_ip6}' AND mac='#{_mac}' AND hostname='#{_hostname}'")
+	end 		# if _sid
 	r.flatten!
 	if r[0].nil? || r[0] == ""
 		# no record exists
@@ -274,77 +280,76 @@ else
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
 
-nmap.hosts do |host|
-	hid = check_host_record(host.ip4, host.ip6, host.mac_addr, host.hostname)
-	if hid.is_a?(Integer) && hid > 0
-		puts "Host exists.  Checking scan..."
-		rtv = db.execute("SELECT sid FROM hosts WHERE hid='#{hid}'")
-		rtv.flatten!
-		if rtv.is_a?(Array) && rtv.length > 1
-			puts "There is more than one scan record for this host."
-		elsif rtv.is_a?(Array) && rtv.length == 1 && rtv[0].is_a?(Integer)
-			puts "Only one scan already for this host."
-			if rtv[0] == sid
-				puts "Same scan"
-			else
-				puts "New scan for host."
-			end
-		end
-	else
-		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
-			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
-			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
-			'#{host.getports(:tcp).length.to_s}', '#{host.getports(:udp).length.to_s}', 
-			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
-			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
-			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
-		puts "SQL2: #{sql2}".red
-		db.execute(sql2)
-		puts "Host record inserted."
-	end
+if nmap.hosts.nil? || nmap.hosts.length == 0
+	puts "There are no hosts in this scan."
+else
+	nmap.hosts do |host|
+		hid = check_host_record(host.ip4_addr, host.ip6_addr, host.mac_addr, host.hostname)
+		if hid.is_a?(Integer) && hid > 0
+			r = db.execute("SELECT sid,hid FROM hosts WHERE sid='#{sid}' AND hid='#{hid}'")
+			r.flatten!
+			#pp r
+			if r[0] == sid && r[1] == hid
+				puts "Scan and host already exist.  Skipping."
+				next
+			else	# hid exists, but sid is different, so different hid (the way this db is structured).
+				puts "Scan is different, so this is a new host."
+				puts "Fall through to inserting new host data."
+			
+				sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
+					udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
+					'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
+					'#{host.getports(:tcp).length.to_s}', '#{host.getports(:udp).length.to_s}', 
+					'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
+					'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
+					'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
+				puts "SQL2: #{sql2}".red
+				db.execute(sql2)
+				puts "Host record inserted."
+				hid = check_host_record(host.ip4_addr, host.ip6_addr, host.mac_addr, host.hostname, sid)
+				if hid
+					sql3 = %{INSERT INTO sequencing (hid, tcpclass, tcpindex, tcpvalues,
+						ipclass, ipvalues, tcptclass, tcptvalues) VALUES ('#{hid}', 
+						'#{host.tcpsequence_class}', '#{host.tcpsequence_index}', 
+						'#{host.tcpsequence_values}', '#{host.ipidsequence_class}',
+						'#{host.ipidsequence_values}', '#{host.tcptssequence_class}',
+						'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
+					puts "SQL3: #{sql3}".cyan
+					db.execute(sql3)
+					puts "Sequencing record inserted."
+			
+					[:tcp, :udp].each do |type|
+						host.getports(type) do |port|
+							sql4 = %{INSERT INTO ports (hid, port, type, state, name, tunnel,
+								product, version, extra, confidence, method, proto, owner, 
+								rpcnum, fingerprint) VALUES ('#{hid}', '#{port.num}', '',
+								'#{port.state}', '#{port.service.name}', '#{port.service.tunnel}',
+								'#{port.service.product}', '#{port.service.version}', 
+								'#{port.service.extra}', '#{port.service.confidence}',
+								'#{port.service.method}', '#{port.service.proto}',
+								'#{port.service.owner}', '#{port.service.rpcnum}',
+								'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
+							puts "#{sql4}".green
+							db.execute(sql4)
+							puts "Port record inserted."
+						end		# host.getports()
+					end		# port types
 
-	sql3 = %{INSERT INTO sequencing (hid, tcpclass, tcpindex, tcpvalues,
-		ipclass, ipvalues, tcptclass, tcptvalues) VALUES ('#{hid}', 
-		'#{host.tcpsequence_class}', '#{host.tcpsequence_index}', 
-		'#{host.tcpsequence_values}', '#{host.ipidsequence_class}',
-		'#{host.ipidsequence_values}', '#{host.tcptssequence_class}',
-		'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
-
-	puts "SQL3: #{sql3}".cyan
-
-	db.execute(sql3)
-
-	puts "Sequencing record inserted."
-
-	[:tcp, :udp].each do |type|
-		host.getports(type) do |port|
-			sql4 = %{INSERT INTO ports (hid, port, type, state, name, tunnel,
-				product, version, extra, confidence, method, proto, owner, 
-				rpcnum, fingerprint) VALUES ('#{hid}', '#{port.num}', '',
-				'#{port.state}', '#{port.service.name}', '#{port.service.tunnel}',
-				'#{port.service.product}', '#{port.service.version}', 
-				'#{port.service.extra}', '#{port.service.confidence}',
-				'#{port.service.method}', '#{port.service.proto}',
-				'#{port.service.owner}', '#{port.service.rpcnum}',
-				'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
-
-			puts "#{sql4}".green
-
-			db.execute(sql4)
-
-			puts "Port record inserted."
-		end
-	end
-
-	sql5 = %{INSERT INTO os (hid, name, family, generation, type, vendor,
-		accuracy) VALUES ('#{hid}', '#{host.os.name}', '#{host.os.osfamily}',
-		'#{host.os.osgen}', '#{host.os.ostype}', '#{host.os.osvendor}',
-		'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
-
-	puts "#{sql5}".magenta
-
-	db.execute(sql5)
-
-	puts "OS record inserted."
-end
+					sql5 = %{INSERT INTO os (hid, name, family, generation, type, vendor,
+						accuracy) VALUES ('#{hid}', '#{host.os.name}', '#{host.os.osfamily}',
+						'#{host.os.osgen}', '#{host.os.ostype}', '#{host.os.osvendor}',
+						'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
+					puts "#{sql5}".magenta
+					db.execute(sql5)
+					puts "OS record inserted."
+				else
+					pp hid
+					raise "Got a false value for hid after record entry."
+				end		# if hid
+			end		# if sid && hid
+		else 
+			raise "Unexpected result after host: HID='#{hid}'"
+		end		# if hid == false
+	end		# nmap.hosts loop
+end		# if nmap.hosts.nil?
 
