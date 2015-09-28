@@ -43,6 +43,14 @@ opts.each do |opt,arg|
 	end
 end
 
+def create_database( db_file = 'nmap_scans.db' )
+	if File.exists?(db_file)
+		# file exists, schema must not
+	else
+		# file doesn't exist
+	end
+end
+
 nmap = Nmap::Parser.new
 begin
 	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
@@ -72,8 +80,7 @@ puts "SQL1: #{sql1}".yellow
 begin
 	db.execute(sql1)
 	puts "Scan record inserted."
-rescue
-	SQLite3::SQLException => sqle
+rescue SQLite3::SQLException => sqle
 	case sqle.message
 	when /no such table/
 		puts "Looks like the database file doesn't exist, or the schema hasn't been committed."
