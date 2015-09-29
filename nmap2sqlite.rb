@@ -53,7 +53,7 @@ EOS
 	end
 end
 
-input = ''; varbose = ''; quiet = ''
+input = ''; @verbose = false; @quiet = false
 help = ''
 @database = 'nmap_scans.db'
 opts.each do |opt,arg|
@@ -63,15 +63,20 @@ opts.each do |opt,arg|
 	when '--database'
 		@database = arg
 	when '--verbose'
-		verbose = true
+		@verbose = true
 	when '--quiet'
-		quiet = true
+		@quiet = true
 	when '--help'
 		usage()
 	end
 end
 
-puts <<-EOS
+if @verbose && @quiet
+	raise "Can't be verbose and quiet at the same time.  Pick one."
+end
+
+if @verbose
+	puts <<-EOS
 
 ################
 # Input file:		#{input}
@@ -79,6 +84,8 @@ puts <<-EOS
 ################
 
 EOS
+
+end
 
 def create_nmap_table( db_file = @database )
 	db = SQLite3::Database.new(db_file)
@@ -88,7 +95,7 @@ def create_nmap_table( db_file = @database )
 	if r[0].nil? || r[0] == ""
 		notable = true
 	elsif r[0] == "nmap"
-		puts "nmap table exists".blue
+		if @verbose; puts "nmap table exists".blue; end
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -98,9 +105,9 @@ def create_nmap_table( db_file = @database )
 	end
 
 	if (notable)
-		print "Creating the nmap table....".yellow
+		if @verbose; print "Creating the nmap table....".yellow; end
 		rtv = db.execute("CREATE TABLE nmap (sid INTEGER PRIMARY KEY AUTOINCREMENT, version TEXT, xmlversion TEXT, args TEXT, types TEXT, starttime INTEGER, startstr TEXT, endtime INTEGER, endstr TEXT, numservices INTEGER)")
-		puts "|#{rtv.length.to_s}|#{$!}|".red
+		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -115,7 +122,7 @@ def create_hosts_table( db_file = @database )
 	if r[0].nil? || r[0] == ""
 		notable = true
 	elsif r[0] == "hosts"
-		puts "hosts table exists".blue
+		if @verbose; puts "hosts table exists".blue; end
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -124,10 +131,10 @@ def create_hosts_table( db_file = @database )
 		return -1
 	end
 
-	if (notable)
-		print "Creating the hosts table...".yellow
+	if notable
+		if @verbose; print "Creating the hosts table...".yellow; end
 		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, status TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
-		puts "|#{rtv.length.to_s}|#{$!}|".red
+		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -142,7 +149,7 @@ def create_seq_table( db_file = @database )
 	if r[0].nil? || r[0] == ""
 		notable = true
 	elsif r[0] == "sequencing"
-		puts "sequencing table exists".blue
+		if @verbose; puts "sequencing table exists".blue; end
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -152,9 +159,9 @@ def create_seq_table( db_file = @database )
 	end
 
 	if (notable)
-		print "Creating the sequencing table...".yellow
+		if @verbose; print "Creating the sequencing table...".yellow; end
 		rtv = db.execute("CREATE TABLE sequencing (hid INTEGER, tcpclass TEXT, tcpindex TEXT, tcpvalues TEXT, ipclass TEXT, ipvalues TEXT, tcptclass TEXT, tcptvalues TEXT)")
-		puts "|#{rtv.length.to_s}|#{$!}|".red
+		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -169,7 +176,7 @@ def create_ports_table( db_file = @database )
 	if r[0].nil? || r[0] == ""
 		notable = true
 	elsif r[0] == "ports"
-		puts "ports table exists".blue
+		if @verbose; puts "ports table exists".blue; end
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -179,9 +186,9 @@ def create_ports_table( db_file = @database )
 	end
 
 	if (notable)
-		print "Creating the ports table...".yellow
+		if @verbose; print "Creating the ports table...".yellow; end
 		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, version TEXT, extra TEXT, confidence INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
-		puts "|#{rtv.length.to_s}|#{$!}|".red
+		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -196,7 +203,7 @@ def create_os_table( db_file = @database )
 	if r[0].nil? || r[0] == ""
 		notable = true
 	elsif r[0] == "os"
-		puts "os table exists".blue
+		if @verbose; puts "os table exists".blue; end
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -206,9 +213,9 @@ def create_os_table( db_file = @database )
 	end
 
 	if (notable)
-		print "Creating the os table...".yellow
+		if @verbose; print "Creating the os table...".yellow; end
 		rtv = db.execute("CREATE TABLE os(hid INTEGER, name TEXT, family TEXT, generation TEXT, type TEXT, vendor TEXT, accuracy INTEGER)")
-		puts "|#{rtv.length.to_s}|#{$!}|".red
+		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -264,7 +271,7 @@ db = SQLite3::Database.new(@database)
 # start with the basics -- log it all
 sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 if sid.is_a?(Integer) && sid > 0
-	puts "Scan record already exists.  SID = '#{sid}'"
+	unless @quiet; puts "Scan record already exists.  SID = '#{sid}'"; end
 else
 	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
 	puts "SQL1: #{sql1}".yellow
@@ -273,7 +280,7 @@ else
 end
 
 if nmap.hosts.nil? || nmap.hosts.length == 0
-	puts "There are no hosts in this scan."
+	unless @quiet; puts "There are no hosts in this scan."; end
 else
 	nmap.hosts do |host|
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}'")
@@ -281,7 +288,7 @@ else
 			if hid[0].is_a?(Array)
 				hid.flatten!
 				if hid.length > 1
-					puts "(1) Got more than one value for hid lookup.  Truncate DB."
+					unless @quiet; puts "(1) Got more than one value for hid lookup.  Truncate DB."; end
 				else
 					hid = hid[0]
 				end
@@ -291,7 +298,7 @@ else
 			s = db.execute("SELECT sid,hid FROM hosts WHERE sid='#{sid}' AND hid='#{hid}'")
 			s.flatten!
 			if s[0] == sid && s[1] == hid
-				puts "Scan and host already exist.  Skipping."
+				unless @quiet; puts "Scan and host already exist.  Skipping."; end
 				next
 			end		# if sid && hid
 			# hid exists, but sid is different, so different hid (the way this db is structured).
@@ -306,13 +313,13 @@ else
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
 		puts "SQL2: #{sql2}".green
 		db.execute(sql2)
-		puts "Host record inserted."
+		unless @quiet; puts "Host record inserted."; end
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}' AND sid='#{sid}'")
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
 				if hid.length > 1
-					puts "(2) Got more than one value for hid lookup.  Truncate DB."
+					unless @quiet; puts "(2) Got more than one value for hid lookup.  Truncate DB."; end
 				else
 					hid = hid[0]
 				end
@@ -328,7 +335,7 @@ else
 				'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
 			puts "SQL3: #{sql3}".cyan
 			db.execute(sql3)
-			puts "Sequencing record inserted."
+			unless @quiet; puts "Sequencing record inserted."; end
 
 			[:tcp, :udp].each do |type|
 				host.getports(type) do |port|
@@ -343,7 +350,7 @@ else
 						'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
 					puts "#{sql4}".green
 					db.execute(sql4)
-					puts "Port record inserted."
+					unless @quiet; puts "Port record inserted."; end
 				end     # host.getports()
 			end     # port types
 
@@ -353,7 +360,7 @@ else
 				'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
 			puts "#{sql5}".magenta
 			db.execute(sql5)
-			puts "OS record inserted."
+			unless @quiet; puts "OS record inserted."; end
 		else
 			raise "Got a false value for hid after record entry."
 		end		# if hid
