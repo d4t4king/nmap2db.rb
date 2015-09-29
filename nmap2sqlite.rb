@@ -14,9 +14,7 @@
 #		enter it into the (default) database.
 #
 #	TODO:
-#		* Specify database file (create schema, if it doesn't exist)
-#		* Add help
-#		* check if scan data already exists in DB
+#		* Expand verbose/quiet to "degrees of verbosity/silence?
 #
 ###############################################################################
 
