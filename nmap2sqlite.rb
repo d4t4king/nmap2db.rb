@@ -272,7 +272,7 @@ if sid.is_a?(Integer) && sid > 0
 	unless @quiet; puts "Scan record already exists.  SID = '#{sid}'"; end
 else
 	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
-	puts "SQL1: #{sql1}".yellow
+	if @verbose; puts "SQL1: #{sql1}".yellow; end
 	rtv = db.execute(sql1)
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
@@ -309,7 +309,7 @@ else
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
 			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
-		puts "SQL2: #{sql2}".green
+		if @vebose; puts "SQL2: #{sql2}".green; end
 		db.execute(sql2)
 		unless @quiet; puts "Host record inserted."; end
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}' AND sid='#{sid}'")
@@ -331,7 +331,7 @@ else
 				'#{host.tcpsequence_values}', '#{host.ipidsequence_class}',
 				'#{host.ipidsequence_values}', '#{host.tcptssequence_class}',
 				'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
-			puts "SQL3: #{sql3}".cyan
+			if @verbose; puts "SQL3: #{sql3}".cyan; end
 			db.execute(sql3)
 			unless @quiet; puts "Sequencing record inserted."; end
 
@@ -346,7 +346,7 @@ else
 						'#{port.service.method}', '#{port.service.proto}',
 						'#{port.service.owner}', '#{port.service.rpcnum}',
 						'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
-					puts "#{sql4}".green
+					if @verbose; puts "#{sql4}".green; end
 					db.execute(sql4)
 					unless @quiet; puts "Port record inserted."; end
 				end     # host.getports()
@@ -356,7 +356,7 @@ else
 				accuracy) VALUES ('#{hid}', '#{host.os.name}', '#{host.os.osfamily}',
 				'#{host.os.osgen}', '#{host.os.ostype}', '#{host.os.osvendor}',
 				'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
-			puts "#{sql5}".magenta
+			if @verbose; puts "#{sql5}".magenta; end
 			db.execute(sql5)
 			unless @quiet; puts "OS record inserted."; end
 		else
