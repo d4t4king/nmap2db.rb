@@ -309,7 +309,7 @@ else
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
 			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
-		if @vebose; puts "SQL2: #{sql2}".green; end
+		if @verbose; puts "SQL2: #{sql2}".green; end
 		db.execute(sql2)
 		unless @quiet; puts "Host record inserted."; end
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}' AND sid='#{sid}'")
