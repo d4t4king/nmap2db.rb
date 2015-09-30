@@ -10,5 +10,12 @@ opts = GetoptLong.new(
 )
 
 database = ''
+opts.each do |opt,arg|
+	case opt
+	when '--database'
+		database = arg
+	end
+end
+
 
 
