@@ -269,16 +269,16 @@ db = SQLite3::Database.new(@database)
 # start with the basics -- log it all
 sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 if sid.is_a?(Integer) && sid > 0
-	unless @quiet; puts "Scan record already exists.  SID = '#{sid}'"; end
+	puts "Scan record already exists.  SID = '#{sid}'" unless @quiet
 else
 	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
-	if @verbose; puts "SQL1: #{sql1}".yellow; end
+	puts "SQL1: #{sql1}".yellow if @verbose
 	rtv = db.execute(sql1)
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
 
 if nmap.hosts.nil? || nmap.hosts.length == 0
-	unless @quiet; puts "There are no hosts in this scan."; end
+	puts "There are no hosts in this scan." unless @quiet
 else
 	nmap.hosts do |host|
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}'")
@@ -286,7 +286,7 @@ else
 			if hid[0].is_a?(Array)
 				hid.flatten!
 				if hid.length > 1
-					unless @quiet; puts "(1) Got more than one value for hid lookup.  Truncate DB."; end
+					puts "(1) Got more than one value for hid lookup.  Truncate DB." unless @quiet
 				else
 					hid = hid[0]
 				end
@@ -296,7 +296,7 @@ else
 			s = db.execute("SELECT sid,hid FROM hosts WHERE sid='#{sid}' AND hid='#{hid}'")
 			s.flatten!
 			if s[0] == sid && s[1] == hid
-				unless @quiet; puts "Scan and host already exist.  Skipping."; end
+				puts "Scan and host already exist.  Skipping." unless @quiet
 				next
 			end		# if sid && hid
 			# hid exists, but sid is different, so different hid (the way this db is structured).
@@ -309,15 +309,15 @@ else
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
 			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
-		if @verbose; puts "SQL2: #{sql2}".green; end
+		puts "SQL2: #{sql2}".green if @verbose
 		db.execute(sql2)
-		unless @quiet; puts "Host record inserted."; end
+		puts "Host record inserted." unless @quiet
 		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}' AND sid='#{sid}'")
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
 				if hid.length > 1
-					unless @quiet; puts "(2) Got more than one value for hid lookup.  Truncate DB."; end
+					puts "(2) Got more than one value for hid lookup.  Truncate DB." unless @quiet
 				else
 					hid = hid[0]
 				end
@@ -331,12 +331,15 @@ else
 				'#{host.tcpsequence_values}', '#{host.ipidsequence_class}',
 				'#{host.ipidsequence_values}', '#{host.tcptssequence_class}',
 				'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
-			if @verbose; puts "SQL3: #{sql3}".cyan; end
+			puts "SQL3: #{sql3}".cyan if @verbose
 			db.execute(sql3)
-			unless @quiet; puts "Sequencing record inserted."; end
+			puts "Sequencing record inserted." unless @quiet
 
 			[:tcp, :udp].each do |type|
 				host.getports(type) do |port|
+					if !port.service.fingerprint.nil? && port.service.fingerprint != ""
+						port.service.fingerprint.gsub!(/\'/, "&#39;")
+					end
 					sql4 = %{INSERT INTO ports (hid, port, type, state, name, tunnel,
 						product, version, extra, confidence, method, proto, owner, 
 						rpcnum, fingerprint) VALUES ('#{hid}', '#{port.num}', '',
@@ -346,9 +349,9 @@ else
 						'#{port.service.method}', '#{port.service.proto}',
 						'#{port.service.owner}', '#{port.service.rpcnum}',
 						'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
-					if @verbose; puts "#{sql4}".green; end
+					puts "#{sql4}".green if @verbose
 					db.execute(sql4)
-					unless @quiet; puts "Port record inserted."; end
+					puts "Port record inserted." unless @quiet
 				end     # host.getports()
 			end     # port types
 
@@ -356,9 +359,9 @@ else
 				accuracy) VALUES ('#{hid}', '#{host.os.name}', '#{host.os.osfamily}',
 				'#{host.os.osgen}', '#{host.os.ostype}', '#{host.os.osvendor}',
 				'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
-			if @verbose; puts "#{sql5}".magenta; end
+			puts "#{sql5}".magenta if @verbose
 			db.execute(sql5)
-			unless @quiet; puts "OS record inserted."; end
+			puts "OS record inserted." unless @quiet
 		else
 			raise "Got a false value for hid after record entry."
 		end		# if hid
