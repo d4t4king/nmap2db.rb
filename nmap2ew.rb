@@ -15,14 +15,17 @@ def show_help(_quit, *_uo, *_uoo)
 
 	print <<-EOS
 
-#{$0} [-h|--help] [-i|--input] <input_file> [-d|--database] </path/to/database/file>
+#{$0} [-h|--help] [-i|--input] <input_file> [-d|--database] </path/to/database/file> [-b|--binary[
 
 -h|--help			Display this useful help message
 -i|--input			Parse the supplied input file for hosts/URLs.  
 -d|--database		Query targets from the specified sqlite/nmap database.  Expects the schema
 					defined in other scripts in this repo.
 -b|--binary			Path to the eyewitness script/binary, in case not in expected location.
-					Expected location is in /usr/bin/(eyewitness)
+					Expected location is in /usr/bin/(eyewitness).  *The file is not actually likelt
+					to be a binary, but a Python script.  It doesn't really matter, so long 
+					as the python script acts like a binary.
+
 EOS
 
 	if _uo && (!_uoo.nil? && _uoo != "")
