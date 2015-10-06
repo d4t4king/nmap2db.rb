@@ -7,11 +7,7 @@ require 'nmap/parser'
 require 'sqlite3'
 require 'getoptlong'
 
-def show_help(_quit, *_uo, *_uoo)
-
-	if _uo && (_uoo.nil? || _uoo == "")
-		raise "Program error.  Option expected when unexpected option found."
-	end
+def show_help()
 
 	print <<-EOS
 
@@ -28,27 +24,25 @@ def show_help(_quit, *_uo, *_uoo)
 
 EOS
 
-	if _uo && (!_uoo.nil? && _uoo != "")
-		raise "Unrecognized option: #{_uoo}"
-	elsif _quit
-		exit 1
-	else
-		puts "...end help..."
-	end
+	exit 1
 
 end
 	
 ew_bin = '/usr/bin/eyewitness '
 
-if bin && (!bin.nil? && bin != "")
-	ew_cmd = bin
-end
-
-pts = GetoptsLong.new(
-	[ '--input', '-i', GetoptsLong::REQUIRED_ARGUMENT ],
-	[ '--database', '-d', GetoptsLong::REQUIRED_ARGUMENT ],
+opts = GetoptLong.new(
+	[ '--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
+	[ '--database', '-d', GetoptLong::REQUIRED_ARGUMENT ],
 	[ '--help', '-h', GetoptLong::NO_ARGUMENT ],
+	[ '--web', GetoptLong::NO_ARGUMENT ],
+	[ '--s-web', GetoptLong::NO_ARGUMENT ],
 )
+
+input = ''
+database = ''
+bin = ''
+web = false
+s_web = false
 
 opts.each do |opt,arg|
 	case opt
@@ -58,9 +52,24 @@ opts.each do |opt,arg|
 		input = arg
 	when '--database'
 		database = arg
+	when '--binary'
+		bin = arg
+	when '--web'
+		web = true
+	when '--s-web'
+		s_web = true
 	else
 		show_help(true, true, opt)
 	end
+end
+
+if bin && (!bin.nil? && bin != "")
+	ew_cmd = bin
+end
+
+unless web || s_web
+	$stderr.puts "Assuming you want (at least) HTTP, since you didn't specify.".yellow 
+	web = true
 end
 
 parser = Nmap::Parser.new
@@ -68,11 +77,22 @@ parser = Nmap::Parser.new
 unless input.nil? || input == ''
 	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
 		parser.parsefile(input)
+	else
+		if File.directory(input)
+			raise "File (#{input}) appears to be a directory."
+		elsif File.zero?(input)
+			raise "Input file (#{input}) appears to be zero (0) bytes."
+		end
 	end
 
-	parser.hosts.each do |h|
-		if h.getports(:tcpi, 'open').include?('80')
-			puts "#{h.ip4_addr},#{h.getport(:tcp, '80')}".green
+	parser.hosts("up").each do |h|
+		#print "#{h.ip4_addr}:  ".magenta
+		#pp h
+		if web
+			puts "http://#{h.ip4_addr}/" unless h.getport(:tcp, '80').nil?
+		end
+		if s_web
+			puts "https://#{h.ip4_addr}/" unless h.getport(:tcp, '443').nil?
 		end
 	end
 end
