@@ -16,20 +16,46 @@ def humanize_uptime(uptime)
 	}.compact.reverse.join(' ')
 end
 
+def show_usage
+	puts <<-END
+
+#{$0} --help|-h --verbose|-v --database|-d <database_file> --output|-o <output_file.pdf>
+
+--help|-h		Display this useful message
+--verbose|-v	Display more verbose output.  Usually used for debugging.
+--database|-d	Specify the database file from which to draw data for the report.
+--output|-o		Specify the output file.  This program currently only supports PDF
+				file format as output.
+END
+
+	exit 0
+end
+
 opts = GetoptLong.new(
-	['--database', '-d', GetoptLong::OPTIONAL_ARGUMENT ],
+	['--help', '-h', GetoptLong::NO_ARGUMENT ],
+	['--verbose', '-v', GetoptLong::NO_ARGUMENT ],
+	['--database', '-d', GetoptLong::REQUIRED_ARGUMENT ],
 	['--output', '-o', GetoptLong::REQUIRED_ARGUMENT ],
 )
 
+verbose = false
 database = ''
 outputpdf = '/tmp/ports_report.pdf'
 opts.each do |opt,arg|
 	case opt
+	when '--help'
+		show_usage
+	when '--verbose'
+		verbose = true
 	when '--database'
 		database = arg
 	when '--output'
 		outputpdf = arg
 	end
+end
+
+if database.nil? or database == ''
+	raise "You must specify a database. \n"
 end
 
 db = SQLite3::Database.new(database)
