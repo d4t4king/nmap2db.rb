@@ -47,7 +47,7 @@ s_web = false
 opts.each do |opt,arg|
 	case opt
 	when '--help'
-		show_help(false)
+		show_help
 	when '--input'
 		input = arg
 	when '--database'
@@ -59,7 +59,7 @@ opts.each do |opt,arg|
 	when '--s-web'
 		s_web = true
 	else
-		show_help(true, true, opt)
+		show_help
 	end
 end
 
