@@ -21,10 +21,10 @@ def show_usage
 
 #{$0} --help|-h --verbose|-v --database|-d <database_file> --output|-o <output_file.pdf>
 
---help|-h		Display this useful message
---verbose|-v	Display more verbose output.  Usually used for debugging.
---database|-d	Specify the database file from which to draw data for the report.
---output|-o		Specify the output file.  This program currently only supports PDF
+--help|-h			Display this useful message
+--verbose|-v			Display more verbose output.  Usually used for debugging.
+--database|-d			Specify the database file from which to draw data for the report.
+--output|-o			Specify the output file.  This program currently only supports PDF
 				file format as output.
 END
 
