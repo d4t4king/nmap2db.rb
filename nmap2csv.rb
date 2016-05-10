@@ -25,6 +25,7 @@ require 'pp'
 require 'nmap/parser'
 require 'getoptlong'
 require 'writeexcel'
+require 'csv'
 
 opts = GetoptLong.new(
 	['--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
@@ -157,9 +158,15 @@ else
 		workbook.close
 	else
 		# write to CSV
-		print "#{host.ipv4_addr.to_s},#{host.hostname.to_s},#{host.os.name.to_s},#{host.os.class_accuracy.to_s},#{host.status},"
-		print "#{host.getportlist([:tcp,:udp],"open|filtered").to_s},#{host.starttime},#{host.endtime},"
-		print (host.endtime.to_i - host.starttime.to_i).to_s + ","
-		puts "#{host.mac_addr},#{host.mac_vendor},#{host.scripts.to_s}"
+		CSV.open(output, "wb") do |csv|
+			summary_header_row = Array.new
+			summary_header_row = ['IP','Hostname','OS Guess','Accuracy','Host Status','Open Ports','Start Time','End Time','Duration','MAC Address','MAC Vendor','Scripts']
+			csv << summary_header_row
+			nmap.hosts(status) do |host|
+				host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, host.endtime.to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+				csv << host_data_row
+				puts host_data_row.to_s if @verbose
+			end
+		end
 	end
 end	
