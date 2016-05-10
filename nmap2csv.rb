@@ -107,6 +107,7 @@ else
 		puts "Found the following hosts in the input file: ".green
 		nmap.hosts do |host|
 			puts "Hostname: #{host.hostname.to_s} IP: #{host.ipv4_addr.to_s}"
+			pp host
 		end
 	end
 end		# if nmap.hosts.nil?
