@@ -33,6 +33,7 @@ opts = GetoptLong.new(
 	['--quiet', '-q', GetoptLong::NO_ARGUMENT ],
 	['--help', '-h', GetoptLong::NO_ARGUMENT ],
 	['--excel', '-E', GetoptLong::NO_ARGUMENT ],
+	['--up', '-U', GetoptLong::NO_ARGUMENT ],
 )
 
 def usage(noexit=false) 
@@ -47,6 +48,7 @@ def usage(noexit=false)
 -q|--quiet			Displays less output than normal.
 -E|--excel			Writes the output to am Excel spreadsheet/workbook, rather than the
 					simpler CSV format.
+-U|--up				Only print/write data for hosts that are "up".
 
 
 EOS
@@ -55,7 +57,7 @@ EOS
 	end
 end
 
-input = ''
+input = ''; status = ''
 @verbose = false; @quiet = false
 help = false; excel = false; output = ''
 opts.each do |opt,arg|
@@ -70,6 +72,8 @@ opts.each do |opt,arg|
 		@quiet = true
 	when '--excel'
 		excel = true
+	when '--up'
+		status = "up"
 	when '--help'
 		usage()
 	end
@@ -114,30 +118,40 @@ else
 		# write the Excel spreadsheet
 		workbook = WriteExcel.new(output)
 		ws_summary = workbook.add_worksheet('Summary')
-		ws_summary.write('A1','IP')
-		ws_summary.write('B1','Hostname')
-		ws_summary.write('C1','OS Guess')
-		ws_summary.write('D1','Accuracy')
-		ws_summary.write('E1','Host Status')
-		ws_summary.write('F1','Open Ports')
-		ws_summary.write('G1','Start Time')
-		ws_summary.write('H1','End Time')
-		ws_summary.write('I1','Duration')
-		ws_summary.write('J1','MAC Address')
-		ws_summary.write('K1','MAC Address Vendor')
-		i = 2
-		nmap.hosts do |host|
-			ws_summary.write("A#{i}",host.ipv4_addr.to_s)
-			ws_summary.write("B#{i}",host.hostname.to_s)
-			ws_summary.write("C#{i}",host.os.name.to_s)
-			ws_summary.write("D#{i}",host.os.class_accuracy.to_s)
-			ws_summary.write("E#{i}",host.status.to_s)
-			ws_summary.write("F#{i}",host.getportlist([:tcp,:udp],"open").to_s)
-			ws_summary.write("G#{i}",host.starttime.to_s)
-			ws_summary.write("H#{i}",host.endtime.to_s)
-			ws_summary.write("I#{i}","=H#{i}-G#{i}")
-			ws_summary.write("J#{i}",host.mac_addr.to_s)
-			ws_summary.write("K#{i}",host.mac_vendor.to_s)
+		summary_header_row = Array.new
+		summary_header_row = ['IP','Hostname','OS Guess','Accuracy','Host Status','Open Ports','Start Time','End Time','Duration','MAC Address','MAC Vendor','Scripts']
+		ws_summary.write_row('A1',summary_header_row)
+		ws_ports = workbook.add_worksheet('Ports')
+		ports_header_row = Array.new
+		ports_header_row = [ 'IP','Port Number','Protocol','Service','State','Reason','Scripts' ]
+		ws_ports.write_row('A1',ports_header_row)
+		i = 2; j = 2
+		nmap.hosts(status) do |host|
+			host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, host.endtime.to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+			puts host_data_row.to_s if @verbose
+			ws_summary.write("A#{i}",host_data_row)
+			#ws_summary.write("A#{i}",host.ipv4_addr.to_s)
+			#ws_summary.write("B#{i}",host.hostname.to_s)
+			#ws_summary.write("C#{i}",host.os.name.to_s)
+			#ws_summary.write("D#{i}",host.os.class_accuracy.to_s)
+			#ws_summary.write("E#{i}",host.status.to_s)
+			#ws_summary.write("F#{i}",host.getportlist([:tcp,:udp],"open").to_s)
+			#ws_summary.write("G#{i}",host.starttime.to_s)
+			#ws_summary.write("H#{i}",host.endtime.to_s)
+			#ws_summary.write("I#{i}","=H#{i}-G#{i}")
+			#ws_summary.write("J#{i}",host.mac_addr.to_s)
+			#ws_summary.write("K#{i}",host.mac_vendor.to_s)
+			host.getports([:tcp,:udp],"open") do |port|
+				ws_ports.write("A#{j}",host.ipv4_addr.to_s)
+				ws_ports.write("B#{j}",port.num.to_s)
+				ws_ports.write("C#{j}",port.proto.to_s.upcase)
+				ws_ports.write("D#{j}","#{port.service.name}:#{port.service.product}:#{port.service.version}".to_s)
+				#ws_ports.write("D#{j}",port.service.inspect.to_s)
+				ws_ports.write("E#{j}",port.state.to_s)
+				ws_ports.write("F#{j}",port.reason.to_s.upcase)
+				ws_ports.write("G#{j}",port.scripts.to_s)
+				j += 1
+			end
 			i += 1
 		end
 		workbook.close
