@@ -36,10 +36,10 @@ opts = GetoptLong.new(
 def usage(noexit=false) 
 	puts <<-EOS
 
-#{$0} [-i|--input] <input file> [-d|--database] <path/to/databaxe/file> [-h|--help] [-v|--verbose] [-q|--quiet]
+#{$0} [-i|--input] <input file> [-d|--database] <path/to/database/file> [-h|--help] [-v|--verbose] [-q|--quiet]
 
 -i|--input			Specifies the full path to the nmap XML input file.
--d|--database			Specifies the full path to the database to be creted/updated.
+-d|--database			Specifies the full path to the database to be created/updated.
 -h|--help			Displays this helpful message, and exits.
 -v|--verbose			Displays more output than normal.
 -q|--quiet			Displays less output than normal.
