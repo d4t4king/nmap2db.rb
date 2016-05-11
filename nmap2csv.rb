@@ -150,7 +150,14 @@ else
 				#ws_ports.write("D#{j}",port.service.inspect.to_s)
 				ws_ports.write("E#{j}",port.state.to_s)
 				ws_ports.write("F#{j}",port.reason.to_s.upcase)
-				ws_ports.write("G#{j}",port.scripts.to_s)
+				#ws_ports.write("G#{j}",port.scripts.to_s)
+				script_str = ''
+				port.scripts do |script|
+					script.output.gsub!(/\n/, " ")		# substitute all new lines with spaces
+					script.output.gsub!(/\s+/, " ")		# eliminate spaces of >1 clump
+					script_str += "* #{script.id.to_s}: #{script.output.to_s}\n"
+				end
+				ws_ports.write("G#{j}",script_str.to_s)
 				j += 1
 			end
 			i += 1
