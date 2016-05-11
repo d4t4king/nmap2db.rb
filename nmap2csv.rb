@@ -131,17 +131,6 @@ else
 			host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, host.endtime.to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
 			puts host_data_row.to_s if @verbose
 			ws_summary.write("A#{i}",host_data_row)
-			#ws_summary.write("A#{i}",host.ipv4_addr.to_s)
-			#ws_summary.write("B#{i}",host.hostname.to_s)
-			#ws_summary.write("C#{i}",host.os.name.to_s)
-			#ws_summary.write("D#{i}",host.os.class_accuracy.to_s)
-			#ws_summary.write("E#{i}",host.status.to_s)
-			#ws_summary.write("F#{i}",host.getportlist([:tcp,:udp],"open").to_s)
-			#ws_summary.write("G#{i}",host.starttime.to_s)
-			#ws_summary.write("H#{i}",host.endtime.to_s)
-			#ws_summary.write("I#{i}","=H#{i}-G#{i}")
-			#ws_summary.write("J#{i}",host.mac_addr.to_s)
-			#ws_summary.write("K#{i}",host.mac_vendor.to_s)
 			host.getports([:tcp,:udp],"open") do |port|
 				ws_ports.write("A#{j}",host.ipv4_addr.to_s)
 				ws_ports.write("B#{j}",port.num.to_s)
