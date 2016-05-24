@@ -1,0 +1,17 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    colorize (0.7.7)
+    nmap-parser (0.3.5)
+    writeexcel (1.0.5)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  colorize
+  nmap-parser
+  writeexcel
+
+BUNDLED WITH
+   1.11.2
