@@ -129,7 +129,7 @@ else
 		ws_ports.write_row('A1',ports_header_row)
 		i = 2; j = 2
 		nmap.hosts(status) do |host|
-			host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d%Y %H:%M:%S%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+			host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %T%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d%Y %T%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
 			puts host_data_row.to_s if @verbose
 			ws_summary.write("A#{i}",host_data_row)
 			host.getports([:tcp,:udp],"open") do |port|
