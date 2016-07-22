@@ -4,7 +4,7 @@
 #
 #	Script:			nmap2sqlite.rb
 #
-#	Author:			Charlie Heselton (cheselton@semprautilities.com)
+#	Author:			Charlie Heselton aka dataking <dataking [at] gmail [dot] com
 #
 #	Date:			9/24/2015
 #

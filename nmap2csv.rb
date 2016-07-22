@@ -4,7 +4,7 @@
 #
 #	Script:			nmap2csv.rb
 #
-#	Author:			Charlie Heselton (cheselton@semprautilities.com)
+#	Author:			Charlie Heselton aka dataking <dataking [at] gmail [dot] com>
 #
 #	Date:			5/10/2016
 #
