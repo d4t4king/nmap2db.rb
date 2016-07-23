@@ -151,6 +151,19 @@ def create_seq_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
+def insert_seq_record(hid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues)
+	begin
+		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+		rtv = dbh.do("INSERT INTO sequencing (hid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{hid}','#{tcpclass}','#{tcpindex}','#{tcpvalues}','#{ipclass}','#{ipvalues}','#{tcptclass}','#{tcptvalues}')")
+		dbh.disconnect
+		return rtv
+	rescue DBI::DatabaseError => dbe
+		puts dbe.message.to_s.red
+	ensure
+		dbh.disconnect if dbh
+	end
+end
+
 def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
 	if @verbose; print "Creating the ports table....".yellow; end
@@ -158,6 +171,19 @@ def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
 	if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 	dbh.disconnect
 	return rtv
+end
+
+def insert_ports_record(hid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint)
+	begin
+		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+		rtv = dbn.do("INSERT INTO ports (hid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint) VALUES ('#{hid}','#{port}','#{type}','#{state}','#{name}','#{tunnel}','#{product}','#{version}','#{extra}','#{confidence}','#{method}','#{proto}','#{owner}','#{rpcnum}','#{fingerprint}')")
+		dbh.disconnect
+		return rtv
+	rescue DBI::DatabaseError => dbe
+		puts dbe.message.to_s.red
+	ensure
+		dbh.disconnect if dbh
+	end
 end
 
 def create_os_table(db=@database,host=@host,username=@user,passwd=@pass)
