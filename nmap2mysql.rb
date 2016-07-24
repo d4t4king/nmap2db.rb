@@ -24,6 +24,7 @@ require 'pp'
 require 'nmap/parser'
 require 'getoptlong'
 require 'dbi'
+require 'date'
 
 opts = GetoptLong.new(
 	['--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
@@ -86,17 +87,6 @@ if @verbose && @quiet
 	raise "Can't be verbose and quiest at the same time.  Pick one."
 end
 
-if @verbose
-	puts <<-END
-
-###############
-# Input file:	#{input}
-# Database:		#{@host}:#{@database}:#{@user}
-###############
-
-END
-
-end
 
 def create_nmap_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
@@ -108,110 +98,82 @@ def create_nmap_table(db=@database,host=@host,username=@user,passwd=@pass)
 end
 
 def insert_nmap_record(version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices)
-	begin
-		dbh = DBU.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-		rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservice) VALUES ('#{version}','#{xmlversion}','#{args}','#{types.to_s}','#{starttime}','#{startstr}','#{endtime}','#{endstr}','#{numservices}')")
-		dbh.disconnect
-		return rtv
-	rescue DBI::DatabaseError => dbe
-		puts dbe.message.to_s.red
-	ensure
-		dbh.disconnect if dbh
-	end
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	starttime = DateTime.strptime(starttime.to_s, "%s") if starttime.to_s =~ /^\d+$/
+	endtime = DateTime.strptime(endtime.to_s, "%s") if endtime.to_s =~ /^\d+/
+	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types.to_s}','#{starttime.to_s{:db}}','#{startstr}','#{endtime.to_s{:db}}','#{endstr}','#{numservices}')")
+	dbh.disconnect
+	return rtv
 end
 
 def create_hosts_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
 	if @verbose; print "Creating the host table....".yellow; end
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS hosts (sid INT, hid INT NOT NULL AUTO_INCREMENT, ip4 VARCHAR(16), ip4num VARCHAR(255), hostname VARCHAR(255), status VARCHAR(255), tcpcount INT, udpcount INT, mac VARCHAR(24), vendor VARCHAR(255), ip6 VARCHAR(64), distance INT, uptime VARCHAR(255), upstr VARCHAR(255), PRIMARY KEY(hid))")
+	rtv = dbh.do("CREATE TABLE IF NOT EXISTS hosts (sid INT NOT NULL, hid INT NOT NULL AUTO_INCREMENT, ip4 VARCHAR(16), ip4num VARCHAR(255), hostname VARCHAR(255), status VARCHAR(255), tcpcount INT, udpcount INT, mac VARCHAR(24), vendor VARCHAR(255), ip6 VARCHAR(64), distance INT, uptime VARCHAR(255), upstr VARCHAR(255), PRIMARY KEY(hid))")
 	if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 	dbh.disconnect
 	return rtv
 end
 
-def insert_host_record(sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distqance,uptime,upstr)
-	begin
-		dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-		rtv = dbn.do("INSERT INTO hosts (sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr) VALUES ('#{sid}','#{ip4}','#{ip4num}','#{hostname}','#{status}','#{tcpcount}','#{udpcount}','#{mac}','#{vendor}','#{ip6}','#{distance}','#{uptime}','#{upstr}')")
-		dbh.disconnect
-		return rtv
-	rescue DBI::DatabaseError => dbe
-		puts dbe.message.to_s.red
-	ensure
-		dbh.disconnect if dbh
-	end
+def insert_host_record(sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr)
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	rtv = dbh.do("INSERT INTO hosts (sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr) VALUES ('#{sid}','#{ip4}','#{ip4num}','#{hostname}','#{status}','#{tcpcount}','#{udpcount}','#{mac}','#{vendor}','#{ip6}','#{distance}','#{uptime}','#{upstr}')")
+	dbh.disconnect
+	return rtv
 end
 
 def create_seq_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
 	if @verbose; print "Creating the sequencing table....".yellow; end
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS sequencing (hid INT, tcpclass VARCHAR(255), tcpindex VARCHAR(255), tcpvalues VARCHAR(255), ipclass VARCHAR(255), ipvalues VARCHAR(255), tcptclass VARCHAR(255), tcptvalues VARCHAR(255))")
+	rtv = dbh.do("CREATE TABLE IF NOT EXISTS sequencing (hid INT NOT NULL, sid INT NOT NULL, tcpclass VARCHAR(255), tcpindex VARCHAR(255), tcpvalues VARCHAR(255), ipclass VARCHAR(255), ipvalues VARCHAR(255), tcptclass VARCHAR(255), tcptvalues VARCHAR(255))")
 	if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 	dbh.disconnect
 	return rtv
 end
 
-def insert_seq_record(hid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues)
-	begin
-		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-		rtv = dbh.do("INSERT INTO sequencing (hid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{hid}','#{tcpclass}','#{tcpindex}','#{tcpvalues}','#{ipclass}','#{ipvalues}','#{tcptclass}','#{tcptvalues}')")
-		dbh.disconnect
-		return rtv
-	rescue DBI::DatabaseError => dbe
-		puts dbe.message.to_s.red
-	ensure
-		dbh.disconnect if dbh
-	end
+def insert_seq_record(hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues)
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{hid}','#{sid}','#{tcpclass}','#{tcpindex}','#{tcpvalues}','#{ipclass}','#{ipvalues}','#{tcptclass}','#{tcptvalues}')")
+	dbh.disconnect
+	return rtv
 end
 
 def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
 	if @verbose; print "Creating the ports table....".yellow; end
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS ports (hid INT, port INT, type VARCHAR(255), state VARCHAR(255), name VARCHAR(255), tunnel VARCHAR(255), product VARCHAR(255), version VARCHAR(255), extra VARCHAR(255), confidence INT, method VARCHAR(255), proto VARCHAR(255), owner VARCHAR(255), rpcnum VARCHAR(255), fingerprint TEXT)")
+	rtv = dbh.do("CREATE TABLE IF NOT EXISTS ports (hid INT NOT NULL, sid INT NOT NULL, port INT, type VARCHAR(255), state VARCHAR(255), name VARCHAR(255), tunnel VARCHAR(255), product VARCHAR(255), version VARCHAR(255), extra VARCHAR(255), confidence INT, method VARCHAR(255), proto VARCHAR(255), owner VARCHAR(255), rpcnum VARCHAR(255), fingerprint TEXT)")
 	if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 	dbh.disconnect
 	return rtv
 end
 
-def insert_ports_record(hid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint)
-	begin
-		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-		rtv = dbh.do("INSERT INTO ports (hid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint) VALUES ('#{hid}','#{port}','#{type}','#{state}','#{name}','#{tunnel}','#{product}','#{version}','#{extra}','#{confidence}','#{method}','#{proto}','#{owner}','#{rpcnum}','#{fingerprint}')")
-		dbh.disconnect
-		return rtv
-	rescue DBI::DatabaseError => dbe
-		puts dbe.message.to_s.red
-	ensure
-		dbh.disconnect if dbh
-	end
+def insert_ports_record(hid,sid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint)
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	rtv = dbh.do("INSERT INTO ports (hid,sid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint) VALUES ('#{hid}','#{sid}','#{port}','#{type}','#{state}','#{name}','#{tunnel}','#{product}','#{version}','#{extra}','#{confidence}','#{method}','#{proto}','#{owner}','#{rpcnum}','#{fingerprint}')")
+	dbh.disconnect
+	return rtv
 end
 
 def create_os_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
 	if @verbose; print "Creating the os table....".yellow; end
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS os (hid INT, name VARCHAR(255), family VARCHAR(255), generation VARCHAR(255), type VARCHAR(255), vendor VARCHAR(255), accuracy INT)")
+	rtv = dbh.do("CREATE TABLE IF NOT EXISTS os (hid INT NOT NULL, sid INT NOT NULL, name VARCHAR(255), family VARCHAR(255), generation VARCHAR(255), type VARCHAR(255), vendor VARCHAR(255), accuracy INT)")
 	if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 	dbh.disconnect
 	return rtv
 end
 
-def insert_os_record(hid,name,family,generation,type,vendor,accuracy)
-	begin
-		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-		rtv = dbh.do("INSERT INTO os (hid,name,family,generation,type,vendor,accuracy) VALUES *'#{hid}','#{name}','#{family}','#{generation}','#{type}','#{vendor}','#{accuracy}')")
-		dbh.disconnect
-		return rtv
-	rescue DBI::DatabaseError => dbe
-		puts dbe.message/to_s.red
-	ensure
-		dbh.disconnect if dbh
-	end
+def insert_os_record(hid,sid,name,family,generation,type,vendor,accuracy)
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	rtv = dbh.do("INSERT INTO os (hid,sid,name,family,generation,type,vendor,accuracy) VALUES ('#{hid}','#{sid}','#{name}','#{family}','#{generation}','#{type}','#{vendor}','#{accuracy}')")
+	dbh.disconnect
+	return rtv
 end
 
 def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 	begin
 		dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-		if @verbose; "Creating the database....".yellow; end
+		if @verbose; print "Creating the database....".light_yellow; end
 		rtv = dbh.do("CREATE DATABASE IF NOT EXISTS #{db}")
 		if @verbose; puts "|#{rtv.to_s}|#{$!}|".red; end
 		dbh.disconnect
@@ -235,30 +197,85 @@ def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 end
 
 def check_scan_record(_args, _starttime, _endtime)
+	return_val = false
+	_starttime = DateTime.strptime(_starttime.to_s, "%s")
+	_endtime = DateTime.strptime(_endtime.to_s, "%s")
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	stmt = dbh.prepare("SELECT sid FROM nmap WHERE args='#{_args}' AND starttime='#{_starttime}' AND endtime='#{_endtime}'")
 	stmt.execute
 	while row=stmt.fetch do
-		if row[0].nil? || row[0] == ''
-			return false
-		else
-			return row[0]
-		end
+		return_val = row[0] unless row[0].nil? || row[0] == ''
 	end
+	stmt.finish
+	dbh.disconnect
+	return return_val
 end
 
-def ip2host_id(ip_addr)
-	begin
-		dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-		hid = dbh.select_one("SELECT MIN(hid) FROM hosts WHERE ip4='#{ip_addr}'")
-		dbh.disconnect
-		return hid
-	rescue DBI::DatabaseError => dbe
-		puts "#{dbe.message}".red
-		exit 0
-	ensure
-		dbh.disconnect if dbh
+def check_host_record(sid,ip4,hostname)
+	return_val = false
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	stmt = dbh.prepare("SELECT hid FROM hosts WHERE sid='#{sid}' AND ip4='#{ip4}' AND hostname='#{hostname}'")
+	stmt.execute
+	while row=stmt.fetch do
+		return_val = row[0] unless row[0].nil? || row[0] == ""
 	end
+	stmt.finish
+	dbh.disconnect
+	return return_val
+end
+
+def seq_record_exists(hid,sid,tcpseq_class,tcpseq_index,tcpseq_values)
+	return_val = false
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	stmt = dbh.prepare("SELECT hid FROM sequencing WHERE hid='#{hid}' AND sid='#{sid}' AND tcpclass='#{tcpseq_class}'")
+	stmt.execute
+	while row=stmt.fetch do
+		return_val = true unless row[0].nil? || row[0] == ""
+		break
+	end
+	stmt.finish
+	dbh.disconnect
+	return return_val
+end
+
+def port_record_exists(hid,sid,portnum,portstate,portproto)
+	return_val = false
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	stmt = dbh.prepare("SELECT hid FROM ports WHERE hid='#{hid}' AND sid='#{sid}' AND port='#{portnum}' AND state='#{portstate}' AND proto='#{portproto}'")
+	stmt.execute
+	while row=stmt.fetch do
+		return_val = true unless row[0].nil? || row[0] == ""
+		break
+	end
+	stmt.finish
+	dbh.disconnect
+	return return_val
+end
+
+def os_record_exists(sid,hid,osname)
+	return_val = false
+	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+	stmt = dbh.prepare("SELECT hid FROM os WHERE hid='#{hid}' AND sid='#{sid}' AND name='#{osname}'")
+	stmt.execute
+	while row=stmt.fetch do
+		return_val = true unless row[0] .nil? || row[0] == ""
+		break
+	end
+	stmt.finish
+	dbh.disconnect
+	return return_val
+end
+
+if @verbose
+	puts <<-END
+
+###############
+# Input file:		#{input}
+# Database:		#{@database}:#{@host}:#{@user}
+###############
+
+END
+
 end
 
 nmap = Nmap::Parser.new
@@ -279,6 +296,7 @@ end
 
 create_database(@database, @host, @user, @pass)
 
+puts nmap.session.inspect.to_s.cyan if @verbose
 sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 if sid.is_a?(Integer) && sid > 0
 	puts "Scan record already exists.  SID = '#{sid}'" unless @quiet
@@ -287,7 +305,7 @@ else
 		pp nmap.session.inspect.to_s.green
 	end
 	rtv = insert_nmap_record(nmap.session.nmap_version, nmap.session.xml_version, nmap.session.scan_args, nmap.session.scan_types, nmap.session.start_time.to_s, nmap.session.start_str, nmap.session.stop_time.to_s, nmap.session.stop_str, nmap.session.numservices)
-	if rtv != 0; raise "There was a problem inserting the nmap record.  RTV: #{rtv}".red; end
+	#if rtv != 0; raise "There was a problem inserting the nmap record.  RTV: #{rtv}".red; end
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
 
@@ -296,65 +314,59 @@ if nmap.hosts.nil? || nmap.hosts.length == 0
 else
 	puts "Found hosts in scan." unless @quiet
 	nmap.hosts do |host|
-		hid = ip2host_id(host.ip4_addr.to_s)
+		hid = 0
+		### check for ahost record with this scand id (sid) and
+		### the same ip and hostname
+		puts "check_host_record(#{sid}, #{host.ip4_addr.to_s}, #{host.hostname})" if @verbose
+		hid = check_host_record(sid, host.ip4_addr.to_s, host.hostname)
 		puts "HID = #{hid}" if @verbose
-		if hid.nil?
+		if !hid || hid.nil?
 			# host record not yet created
-			begin
-				rtv = insert_host_record(sid,host.ip4_addr,"[ip4num]",host.hostname,host.status,host.getports(:tcp).length.to_s,host.getports(:udp).length.to_s},host.mac_addr,host.mac_vendor,host.ip6_addr},host.distance.to_s,host.uptime_seconds.to_s,host.uptime_lastboot)
-				if rtv != 0; raise "There was a problem inserting the host record.  RTV: #{rtv}".red; end
-			rescue DBI::DatabaseError => dbe
-				puts "#{dbe.message}".red
-				exit 0
-			ensure
-				dbh.disconnect if dbh
-			end
+			puts "hid is nil, creating...." if @verbose
+			puts "#{sid},#{host.ip4_addr},[ip4num],#{host.hostname},#{host.status},#{host.getports(:tcp).length.to_s},#{host.getports(:udp).length.to_s},#{host.mac_addr},#{host.mac_vendor},#{host.ip6_addr},#{host.distance},#{host.uptime_seconds},#{host.uptime_lastboot}" if @verbose
+			rtv = insert_host_record(sid,host.ip4_addr,"[ip4num]",host.hostname,host.status,host.getports(:tcp).length.to_s,host.getports(:udp).length.to_s,host.mac_addr,host.mac_vendor,host.ip6_addr,host.distance,host.uptime_seconds,host.uptime_lastboot)
+			#if rtv != 0; raise "There was a problem inserting the host record.  RTV: #{rtv}".red; end
 		elsif (hid.is_a?(Integer) || hid.is_a?(Fixnum)) && hid > 0
-			# check other scnas (get hid/sid)
-			dbh.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
+			# check other scans (get hid/sid)
+			dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 			s = dbh.select_one("SELECT sid,hid FROM hosts WHERE sid='#{sid}' AND hid='#{hid}'")
 			dbh.disconnect
 			if !s.nil? && (s[0] == sid && s[1] == hid)
 				puts "Scan and host already exist.  Skipping." unless @quiet
-				next
+				#next
 			end
 		end
-		if hid
-			puts "#{hid}".green if @verbose
-			rtv = insert_seq_record(hid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values,host.ipidsequence_class,host.ipidsequence_values,host.tcptssequence_class,host.tcptssequence_values)
-			if rtv != 0; raise "There was a problem inserting the seq record.  RTV: #{rtv}".red; end
-
-=begin
-			[:tcp, :udp].each do |type|
-				host.getports(type) do |port|
+		### check for a seq record with this scan id (sid) and
+		### tcpseuqence_class, tcpsequence_index, tcpsequence_values
+		if seq_record_exists(hid,sid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values)
+			puts "sequencing record exists for scan and host.  skipping...." if @verbose
+		else
+			rtv = insert_seq_record(hid,sid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values,host.ipidsequence_class,host.ipidsequence_values,host.tcptssequence_class,host.tcptssequence_values)
+			puts "return value for seq record insert: #{rtv}" if @verbose
+		end	
+		[:tcp, :udp].each do |type|
+			host.getports(type) do |port|
+				### check for ports reocrd wtih this hid, sid, port num, port state, port name
+				if port_record_exists(hid,sid,port.num,port.state,port.service.proto)
+					puts "port record exists for scan and host.  skipping...." if @verbose
+				else
 					if !port.service.fingerprint.nil? && port.service.fingerprint != ""
 						port.service.fingerprint.gsub!(/\'/, "&#39;")
 					end
-					sql4 = %{INSERT INTO ports (hid, port, type, state, name, tunnel,
-						product, version, extra, confidence, method, proto, owner, 
-						rpcnum, fingerprint) VALUES ('#{hid}', '#{port.num}', '',
-						'#{port.state}', '#{port.service.name}', '#{port.service.tunnel}',
-						'#{port.service.product}', '#{port.service.version}', 
-						'#{port.service.extra}', '#{port.service.confidence}',
-						'#{port.service.method}', '#{port.service.proto}',
-						'#{port.service.owner}', '#{port.service.rpcnum}',
-						'#{port.service.fingerprint}')}.gsub(/(\t|\s)+/, " ").strip
-					puts "#{sql4}".green if @verbose
-					db.execute(sql4)
-					puts "Port record inserted." unless @quiet
-				end     # host.getports()
-			end     # port types
+					rtv = insert_ports_record(hid,sid,port.num,'',port.state,port.service.name,port.service.tunnel,port.service.product,port.service.version,port.service.extra,port.service.confidence,port.service.method,port.service.proto,port.service.owner,port.service.rpcnum,port.service.fingerprint)
+					puts "return value for ports record insert: #{rtv}" if @verbose
+				end
+			end     # host.getports()
+		end     # port types
 
-			sql5 = %{INSERT INTO os (hid, name, family, generation, type, vendor,
-				accuracy) VALUES ('#{hid}', '#{host.os.name}', '#{host.os.osfamily}',
-				'#{host.os.osgen}', '#{host.os.ostype}', '#{host.os.osvendor}',
-				'#{host.os.class_accuracy}')}.gsub(/(\t|\s)+/, " ").strip
-			puts "#{sql5}".magenta if @verbose
-			db.execute(sql5)
-			puts "OS record inserted." unless @quiet
+		### check for os record with this scan id (sid) and host id (hid) and
+		### os.name
+		if os_record_exists(sid,hid,host.os.name)
+			puts "os record exists for scan and host.  skipping...." if @verbose
 		else
-			raise "Got a false value for hid after record entry."
-=end
-		end     # if hid
+			rtv = insert_os_record(hid,sid,host.os.name,host.os.osfamily,host.os.osgen,host.os.ostype,host.os.osvendor,host.os.class_accuracy)
+			puts "return value for os record insert: #{rtv}" if @verbose
+		end
 	end     # nmap.hosts loop
 end     # if nmap.hosts.nil?
+
