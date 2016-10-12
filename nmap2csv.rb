@@ -15,7 +15,7 @@
 #		database.
 #
 #	TODO:
-#		* Expand verbose/quiet to "degrees of verbosity/silence?
+#		* Expand verbose/quiet to "degrees of verbosity/silence?"
 #
 ###############################################################################
 
@@ -44,7 +44,7 @@ def usage(noexit=false)
 #{$0} [-i|--input] <input file> [-o|--output] <path/to/csv/file> [-h|--help] [-v|--verbose] [-q|--quiet]
 
 -i|--input			Specifies the full path to the nmap XML input file.
--0|--output			Specifies the full path to the csv to be created.
+-o|--output			Specifies the full path to the csv to be created.
 -h|--help			Displays this helpful message, and exits.
 -v|--verbose			Displays more output than normal.
 -q|--quiet			Displays less output than normal.
