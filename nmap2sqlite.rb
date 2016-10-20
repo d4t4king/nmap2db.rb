@@ -247,11 +247,11 @@ def check_scan_record(_args, _starttime, _endtime)
 end
 
 nmap = Nmap::Parser.new
-if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+if File.exist?(input) && !File.directory?(input) && !File.zero?(input)
 	nmap.parsefile(input)
 else
 	usage(true)
-	if !File.exists?(input)
+	if !File.exist?(input)
 		raise "Input file (#{input}) doesn't exist or not specified.  Nothing to do."
 	elsif File.directory?(input)
 		raise "Input file (#{input}) appears to be a directory.  I don't know how to handle those (yet)."
