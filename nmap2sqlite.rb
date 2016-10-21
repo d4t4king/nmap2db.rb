@@ -89,10 +89,10 @@ def create_nmap_table( db_file = @database )
 	notable = false
 	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='nmap'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		notable = true
 	elsif r[0] == "nmap"
-		if @verbose; puts "nmap table exists".blue; end
+		puts "nmap table exists".blue if @verbose
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -101,10 +101,10 @@ def create_nmap_table( db_file = @database )
 		return -1
 	end
 
-	if (notable)
-		if @verbose; print "Creating the nmap table....".yellow; end
+	if notable
+		print "Creating the nmap table....".yellow if @verbose
 		rtv = db.execute("CREATE TABLE nmap (sid INTEGER PRIMARY KEY AUTOINCREMENT, version TEXT, xmlversion TEXT, args TEXT, types TEXT, starttime INTEGER, startstr TEXT, endtime INTEGER, endstr TEXT, numservices INTEGER)")
-		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
+		puts "|#{rtv.length}|#{$!}|".red if @verbose
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -116,10 +116,10 @@ def create_hosts_table( db_file = @database )
 	notable = false
 	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='hosts'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		notable = true
 	elsif r[0] == "hosts"
-		if @verbose; puts "hosts table exists".blue; end
+		puts "hosts table exists".blue if @verbose
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -129,9 +129,9 @@ def create_hosts_table( db_file = @database )
 	end
 
 	if notable
-		if @verbose; print "Creating the hosts table...".yellow; end
+		print "Creating the hosts table...".yellow if @verbose
 		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, status TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
-		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
+		puts "|#{rtv.length}|#{$!}|".red if @verbose
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -143,10 +143,10 @@ def create_seq_table( db_file = @database )
 	notable = false
 	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sequencing'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		notable = true
 	elsif r[0] == "sequencing"
-		if @verbose; puts "sequencing table exists".blue; end
+		puts "sequencing table exists".blue if @verbose
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -155,10 +155,10 @@ def create_seq_table( db_file = @database )
 		return -1
 	end
 
-	if (notable)
-		if @verbose; print "Creating the sequencing table...".yellow; end
+	if notable
+		print "Creating the sequencing table...".yellow if @verbose
 		rtv = db.execute("CREATE TABLE sequencing (hid INTEGER, tcpclass TEXT, tcpindex TEXT, tcpvalues TEXT, ipclass TEXT, ipvalues TEXT, tcptclass TEXT, tcptvalues TEXT)")
-		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
+		puts "|#{rtv.length}|#{$!}|".red if @verbose
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -170,10 +170,10 @@ def create_ports_table( db_file = @database )
 	notable = false
 	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ports'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		notable = true
 	elsif r[0] == "ports"
-		if @verbose; puts "ports table exists".blue; end
+		puts "ports table exists".blue if @verbose
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -182,10 +182,10 @@ def create_ports_table( db_file = @database )
 		return -1
 	end
 
-	if (notable)
-		if @verbose; print "Creating the ports table...".yellow; end
+	if notable
+		print "Creating the ports table...".yellow if @verbose
 		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, version TEXT, extra TEXT, confidence INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
-		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
+		puts "|#{rtv.length}|#{$!}|".red if @verbose
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -197,10 +197,10 @@ def create_os_table( db_file = @database )
 	notable = false
 	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='os'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		notable = true
 	elsif r[0] == "os"
-		if @verbose; puts "os table exists".blue; end
+		puts "os table exists".blue if @verbose
 		return 0
 	else
 		puts "Unexpected result:".red
@@ -210,9 +210,9 @@ def create_os_table( db_file = @database )
 	end
 
 	if (notable)
-		if @verbose; print "Creating the os table...".yellow; end
+		print "Creating the os table...".yellow if @verbose
 		rtv = db.execute("CREATE TABLE os(hid INTEGER, name TEXT, family TEXT, generation TEXT, type TEXT, vendor TEXT, accuracy INTEGER)")
-		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
+		puts "|#{rtv.length}|#{$!}|".red if @verbose
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -235,7 +235,7 @@ def check_scan_record(args, starttime, endtime)
 	db = SQLite3::Database.new(@database)
 	r = db.execute("SELECT sid FROM nmap WHERE args='#{args}' AND starttime='#{starttime}' AND endtime='#{endtime}'")
 	r.flatten!
-	if r[0].nil? || r[0] == ""
+	if r[0].nil?
 		# no record exists
 		return false
 	else
