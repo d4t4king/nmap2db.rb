@@ -284,11 +284,13 @@ else
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
-				if hid.length > 1
-					puts "(1) Got more than one value for hid lookup.  Truncate DB." unless @quiet
-				else
+				# apparently it is bad style to have deeply nested blocks (4+ levels)
+				# let's see if this breaks anything
+				#if hid.length > 1
+				#	puts "(1) Got more than one value for hid lookup.  Truncate DB." unless @quiet
+				#else
 					hid = hid[0]
-				end
+				#end
 			end
 		end
 		if hid.is_a?(Integer) && hid > 0
@@ -306,7 +308,7 @@ else
 			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
 			'#{host.getports(:tcp).length}', '#{host.getports(:udp).length}', 
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
-			'#{host.distance.to_s}', '#{host.uptime_seconds}', 
+			'#{host.distance}', '#{host.uptime_seconds}', 
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
 		puts "SQL2: #{sql2}".green if @verbose
 		db.execute(sql2)
@@ -315,11 +317,13 @@ else
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
-				if hid.length > 1
-					puts "(2) Got more than one value for hid lookup.  Truncate DB." unless @quiet
-				else
+				# apparently it is bad style to have deeply nested blocks (4+ levels)
+				# let's see if this breaks anything
+				#if hid.length > 1
+				#	puts "(2) Got more than one value for hid lookup.  Truncate DB." unless @quiet
+				#else
 					hid = hid[0]
-				end
+				#end
 			end
 		end
 		if hid
