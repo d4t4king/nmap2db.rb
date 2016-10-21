@@ -52,7 +52,6 @@ EOS
 end
 
 input = ''; @verbose = false; @quiet = false
-help = ''
 @database = 'nmap_scans.db'
 opts.each do |opt,arg|
 	case opt
@@ -105,7 +104,7 @@ def create_nmap_table( db_file = @database )
 	if (notable)
 		if @verbose; print "Creating the nmap table....".yellow; end
 		rtv = db.execute("CREATE TABLE nmap (sid INTEGER PRIMARY KEY AUTOINCREMENT, version TEXT, xmlversion TEXT, args TEXT, types TEXT, starttime INTEGER, startstr TEXT, endtime INTEGER, endstr TEXT, numservices INTEGER)")
-		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
+		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -132,7 +131,7 @@ def create_hosts_table( db_file = @database )
 	if notable
 		if @verbose; print "Creating the hosts table...".yellow; end
 		rtv = db.execute("CREATE TABLE hosts (sid INTEGER, hid INTEGER PRIMARY KEY AUTOINCREMENT, ip4 TEXT, ip4num TEXT, hostname TEXT, status TEXT, tcpcount INTEGER, udpcount INTEGER, mac TEXT, vendor TEXT, ip6 TEXT, distance INTEGER, uptime TEXT, upstr TEXT)")
-		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
+		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -159,7 +158,7 @@ def create_seq_table( db_file = @database )
 	if (notable)
 		if @verbose; print "Creating the sequencing table...".yellow; end
 		rtv = db.execute("CREATE TABLE sequencing (hid INTEGER, tcpclass TEXT, tcpindex TEXT, tcpvalues TEXT, ipclass TEXT, ipvalues TEXT, tcptclass TEXT, tcptvalues TEXT)")
-		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
+		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -186,7 +185,7 @@ def create_ports_table( db_file = @database )
 	if (notable)
 		if @verbose; print "Creating the ports table...".yellow; end
 		rtv = db.execute("CREATE TABLE ports (hid INTEGER, port INTEGER, type TEXT, state TEXT, name TEXT, tunnel TEXT, product TEXT, version TEXT, extra TEXT, confidence INTEGER, method TEXT, proto TEXT, owner TEXT, rpcnum TEXT, fingerprint TEXT)")
-		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
+		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
@@ -213,28 +212,28 @@ def create_os_table( db_file = @database )
 	if (notable)
 		if @verbose; print "Creating the os table...".yellow; end
 		rtv = db.execute("CREATE TABLE os(hid INTEGER, name TEXT, family TEXT, generation TEXT, type TEXT, vendor TEXT, accuracy INTEGER)")
-		if @verbose; puts "|#{rtv.length.to_s}|#{$!}|".red; end
+		if @verbose; puts "|#{rtv.length}|#{$!}|".red; end
 	else
 		puts "We shouldn't be here....ever.".blue.on_white.blink
 		pp notable
 	end
 end
 
-def create_database( _db_file = @database )
-	create_nmap_table(_db_file)
+def create_database( i_db_file = @database )
+	create_nmap_table(i_db_file)
 
-	create_hosts_table(_db_file)
+	create_hosts_table(i_db_file)
 
-	create_seq_table(_db_file)
+	create_seq_table(i_db_file)
 
-	create_ports_table(_db_file)
+	create_ports_table(i_db_file)
 
-	create_os_table(_db_file)
+	create_os_table(i_db_file)
 end
 
-def check_scan_record(_args, _starttime, _endtime)
+def check_scan_record(args, starttime, endtime)
 	db = SQLite3::Database.new(@database)
-	r = db.execute("SELECT sid FROM nmap WHERE args='#{_args}' AND starttime='#{_starttime}' AND endtime='#{_endtime}'")
+	r = db.execute("SELECT sid FROM nmap WHERE args='#{args}' AND starttime='#{starttime}' AND endtime='#{endtime}'")
 	r.flatten!
 	if r[0].nil? || r[0] == ""
 		# no record exists
@@ -271,9 +270,9 @@ sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nm
 if sid.is_a?(Integer) && sid > 0
 	puts "Scan record already exists.  SID = '#{sid}'" unless @quiet
 else
-	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time.to_s}', '#{nmap.session.start_str}', '#{nmap.session.stop_time.to_s}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
+	sql1 = "INSERT INTO nmap (version, xmlversion, args, types, starttime, startstr, endtime, endstr, numservices) VALUES ('#{nmap.session.nmap_version}', '#{nmap.session.xml_version}', '#{nmap.session.scan_args}', '#{nmap.session.scan_types}', '#{nmap.session.start_time}', '#{nmap.session.start_str}', '#{nmap.session.stop_time}', '#{nmap.session.stop_str}', '#{nmap.session.numservices}')"
 	puts "SQL1: #{sql1}".yellow if @verbose
-	rtv = db.execute(sql1)
+	#rtv = db.execute(sql1)			# uncomment this if you want to use rtv somewhere.
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
 
@@ -281,7 +280,7 @@ if nmap.hosts.nil? || nmap.hosts.length == 0
 	puts "There are no hosts in this scan." unless @quiet
 else
 	nmap.hosts do |host|
-		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}'")
+		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr}'")
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
@@ -305,14 +304,14 @@ else
 		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
 			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
 			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
-			'#{host.getports(:tcp).length.to_s}', '#{host.getports(:udp).length.to_s}', 
+			'#{host.getports(:tcp).length}', '#{host.getports(:udp).length}', 
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
-			'#{host.distance.to_s}', '#{host.uptime_seconds.to_s}', 
+			'#{host.distance.to_s}', '#{host.uptime_seconds}', 
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
 		puts "SQL2: #{sql2}".green if @verbose
 		db.execute(sql2)
 		puts "Host record inserted." unless @quiet
-		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr.to_s}' AND sid='#{sid}'")
+		hid = db.execute("SELECT hid FROM hosts where ip4='#{host.ip4_addr}' AND sid='#{sid}'")
 		if hid.is_a?(Array)
 			if hid[0].is_a?(Array)
 				hid.flatten!
