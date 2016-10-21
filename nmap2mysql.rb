@@ -174,9 +174,9 @@ end
 def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 	begin
 		dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-		if @verbose; print "Creating the database....".light_yellow; end
+		print "Creating the database....".light_yellow if @verbose
 		rtv = dbh.do("CREATE DATABASE IF NOT EXISTS #{db}")
-		if @verbose; puts "|#{rtv}|#{$!}|".red; end
+		puts "|#{rtv}|#{$!}|".red if @verbose
 		dbh.disconnect
 	rescue DBI::DatabaseError => e
 		if e.message =~ /Unknown database \'#{db}\'/
@@ -184,15 +184,15 @@ def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 		end
 	end
 	rtv = create_nmap_table(@database, @host, @user, @pass)
-	if @verbose; puts "create_nmap_table:RTV: #{rtv}".red; end
+	puts "create_nmap_table:RTV: #{rtv}".red if @verbose
 	rtv = create_hosts_table(@database, @host, @user, @pass)
-	if @verbose; puts "create_hosts_table:RTV: #{rtv}".red; end
+	puts "create_hosts_table:RTV: #{rtv}".red if @verbose
 	rtv = create_seq_table(@database, @host, @user, @pass)
-	if @verbose; puts "create_seq_table:RTV: #{rtv}".red; end
+	puts "create_seq_table:RTV: #{rtv}".red if @verbose
 	rtv = create_ports_table(@database, @host, @user, @pass)
-	if @verbose; puts "create_ports_table:RTV: #{rtv}".red; end
+	puts "create_ports_table:RTV: #{rtv}".red if @verbose
 	rtv = create_os_table(@database, @host, @user, @pass)
-	if @verbose; puts "create_os_table:RTV: #{rtv}".red; end
+	puts "create_os_table:RTV: #{rtv}".red if @verbose
 
 	return rtv
 end
