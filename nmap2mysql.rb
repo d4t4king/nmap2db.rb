@@ -96,13 +96,13 @@ def create_nmap_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
-def insert_nmap_record(version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices)
+def insert_nmap_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	starttime = DateTime.strptime(starttime.to_s, "%s") if starttime.to_s =~ /^\d+$/
 	endtime = DateTime.strptime(endtime.to_s, "%s") if endtime.to_s =~ /^\d+/
 	# not sure why the starttime and endtime have the symbol reference.  code climate doesn't like it.
 	#rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime{:db}}','#{startstr}','#{endtime{:db}}','#{endstr}','#{numservices}')")
-	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime}','#{startstr}','#{endtime}','#{endstr}','#{numservices}')")
+	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{p[:version]}','#{p[:xmlversion]}','#{p[:args]}','#{p[:types]}','#{p[:starttime]}','#{p[:startstr]}','#{p[:endtime]}','#{p[:endstr]}','#{p[:numservices]}')")
 	dbh.disconnect
 	return rtv
 end
@@ -305,7 +305,18 @@ else
 	if @verbose
 		pp nmap.session.inspect.to_s.green
 	end
-	rtv = insert_nmap_record(nmap.session.nmap_version, nmap.session.xml_version, nmap.session.scan_args, nmap.session.scan_types, nmap.session.start_time.to_s, nmap.session.start_str, nmap.session.stop_time.to_s, nmap.session.stop_str, nmap.session.numservices)
+	params = {
+		:version => nmap.session.nmap_version,
+		:xmlversion => nmap.session.xml_version,
+		:args => nmap.session.scan_args,
+		:types => nmap.session.scan_types,
+		:starttime => nmap.session.start_time,
+		:startstr => nmap.session.start_str,
+		:endtime => nmap.session.stop_time,
+		:endstr => nmap.session.stop_str,
+		:numservices => nmap.session.numservices
+	}
+	rtv = insert_nmap_record(params)
 	#if rtv != 0; raise "There was a problem inserting the nmap record.  RTV: #{rtv}".red; end
 	sid = check_scan_record(nmap.session.scan_args, nmap.session.start_time.to_s, nmap.session.stop_time.to_s)
 end
@@ -316,7 +327,7 @@ else
 	puts "Found hosts in scan." unless @quiet
 	nmap.hosts do |host|
 		hid = 0
-		### check for ahost record with this scand id (sid) and
+		### check for a host record with this scand id (sid) and
 		### the same ip and hostname
 		puts "check_host_record(#{sid}, #{host.ip4_addr}, #{host.hostname})" if @verbose
 		hid = check_host_record(sid, host.ip4_addr.to_s, host.hostname)
