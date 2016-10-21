@@ -61,7 +61,7 @@ end
 
 input = ''; status = ''
 @verbose = false; @quiet = false
-help = false; excel = false; output = ''
+excel = false; output = ''
 opts.each do |opt,arg|
 	case opt
 	when '--input'
@@ -124,7 +124,6 @@ else
 		summary_header_row = ['IP','Hostname','OS Guess','Accuracy','Host Status','Open Ports','Start Time - Epoch','Start Date','End Time - Epoch','End Date','Duration','MAC Address','MAC Vendor','Scripts']
 		ws_summary.write_row('A1',summary_header_row)
 		ws_ports = workbook.add_worksheet('Ports')
-		ports_header_row = Array.new
 		ports_header_row = [ 'IP','Port Number','Protocol','Service','State','Reason','Scripts' ]
 		ws_ports.write_row('A1',ports_header_row)
 		i = 2; j = 2
@@ -143,9 +142,9 @@ else
 				#ws_ports.write("G#{j}",port.scripts.to_s)
 				script_str = ''
 				port.scripts do |script|
-					script.output.gsub!(/\n/, " ")		# substitute all new lines with spaces
-					script.output.gsub!(/\s+/, " ")		# eliminate spaces of >1 clump
-					script_str += "* #{script.id.to_s}: #{script.output.to_s}\n"
+					script.output.tr!(/\n/, " ")		# substitute all new lines with spaces
+					script.output.tr!(/\s+/, " ")		# eliminate spaces of >1 clump
+					script_str += "* #{script.id}: #{script.output}\n"
 				end
 				ws_ports.write("G#{j}",script_str.to_s)
 				j += 1
