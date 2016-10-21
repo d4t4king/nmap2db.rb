@@ -100,7 +100,9 @@ def insert_nmap_record(version,xmlversion,args,types,starttime,startstr,endtime,
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	starttime = DateTime.strptime(starttime.to_s, "%s") if starttime.to_s =~ /^\d+$/
 	endtime = DateTime.strptime(endtime.to_s, "%s") if endtime.to_s =~ /^\d+/
-	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime{:db}}','#{startstr}','#{endtime{:db}}','#{endstr}','#{numservices}')")
+	# not sure why the starttime and endtime have the symbol reference.  code climate doesn't like it.
+	#rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime{:db}}','#{startstr}','#{endtime{:db}}','#{endstr}','#{numservices}')")
+	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime}','#{startstr}','#{endtime}','#{endstr}','#{numservices}')")
 	dbh.disconnect
 	return rtv
 end
