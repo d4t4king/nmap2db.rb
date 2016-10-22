@@ -116,9 +116,9 @@ def create_hosts_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
-def insert_host_record(sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr)
+def insert_host_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	rtv = dbh.do("INSERT INTO hosts (sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr) VALUES ('#{sid}','#{ip4}','#{ip4num}','#{hostname}','#{status}','#{tcpcount}','#{udpcount}','#{mac}','#{vendor}','#{ip6}','#{distance}','#{uptime}','#{upstr}')")
+	rtv = dbh.do("INSERT INTO hosts (sid,ip4,ip4num,hostname,status,tcpcount,udpcount,mac,vendor,ip6,distance,uptime,upstr) VALUES ('#{p[:sid]}','#{p[:ipv4_addr]}','#{p[:ipv4num]}','#{p[:hostname]}','#{p[:status]}','#{p[:tcpcount]}','#{p[:udpcount]}','#{p[:mac_addr]}','#{p[:mac_vendor]}','#{p[:ipv6_addr]}','#{p[:distance]}','#{p[:uptime_secs]}','#{p[:uptime_lastboot]}')")
 	dbh.disconnect
 	return rtv
 end
@@ -132,9 +132,9 @@ def create_seq_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
-def insert_seq_record(hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues)
+def insert_seq_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{hid}','#{sid}','#{tcpclass}','#{tcpindex}','#{tcpvalues}','#{ipclass}','#{ipvalues}','#{tcptclass}','#{tcptvalues}')")
+	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:tcpsequence_class]}','#{p[:tcpsequence_index]}','#{p[:tcpsequence_values]}','#{p[:ipidsequence_class]}','#{p[:ipidsequence_values]}','#{p[:tcptssequence_class}','#{ip[:tcptssequence_values]}')")
 	dbh.disconnect
 	return rtv
 end
@@ -148,9 +148,9 @@ def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
-def insert_ports_record(hid,sid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint)
+def insert_ports_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	rtv = dbh.do("INSERT INTO ports (hid,sid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint) VALUES ('#{hid}','#{sid}','#{port}','#{type}','#{state}','#{name}','#{tunnel}','#{product}','#{version}','#{extra}','#{confidence}','#{method}','#{proto}','#{owner}','#{rpcnum}','#{fingerprint}')")
+	rtv = dbh.do("INSERT INTO ports (hid,sid,port,type,state,name,tunnel,product,version,extra,confidence,method,proto,owner,rpcnum,fingerprint) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:port_num]}','#{p[:type]}','#{p[:state]}','#{p[:service_name]}','#{p[:service_tunnel]}','#{p[:product]}','#{p[:version]}','#{p[:extra]}','#{p[:confidence]}','#{p[:method]}','#{p[:protocol]}','#{p[:owner]}','#{p[:rpcnum]}','#{p[:fingerprint]}')")
 	dbh.disconnect
 	return rtv
 end
@@ -164,9 +164,10 @@ def create_os_table(db=@database,host=@host,username=@user,passwd=@pass)
 	return rtv
 end
 
-def insert_os_record(hid,sid,name,family,generation,type,vendor,accuracy)
+#def insert_os_record(hid,sid,name,family,generation,type,vendor,accuracy)
+def insert_os_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	rtv = dbh.do("INSERT INTO os (hid,sid,name,family,generation,type,vendor,accuracy) VALUES ('#{hid}','#{sid}','#{name}','#{family}','#{generation}','#{type}','#{vendor}','#{accuracy}')")
+	rtv = dbh.do("INSERT INTO os (hid,sid,name,family,generation,type,vendor,accuracy) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:os_name]}','#{p[:os_family]}','#{p[:os_gen]}','#{p[:os_type]}','#{p[:os_vendor]}','#{p[:class_accuracy]}')")
 	dbh.disconnect
 	return rtv
 end
@@ -336,7 +337,22 @@ else
 			# host record not yet created
 			puts "hid is nil, creating...." if @verbose
 			puts "#{sid},#{host.ip4_addr},[ip4num],#{host.hostname},#{host.status},#{host.getports(:tcp).length},#{host.getports(:udp).length},#{host.mac_addr},#{host.mac_vendor},#{host.ip6_addr},#{host.distance},#{host.uptime_seconds},#{host.uptime_lastboot}" if @verbose
-			rtv = insert_host_record(sid,host.ip4_addr,"[ip4num]",host.hostname,host.status,host.getports(:tcp).length.to_s,host.getports(:udp).length.to_s,host.mac_addr,host.mac_vendor,host.ip6_addr,host.distance,host.uptime_seconds,host.uptime_lastboot)
+			params = {
+				:sid	=>	sid,
+				:ipv4addr	=>	host.ip4_addr,
+				:ipv4num	=>	"[ip4num]",
+				:hostname	=>	host.hostname,
+				:status		=>	host.status,
+				:tcpcount	=>	host.getports(:tcp).size,
+				:udpcount	=>	host.getports(:udp).size,
+				:mac_addr	=>	host.mac_addr,
+				:mac_vendor	=>	host.mac_vendor,
+				:ipv6_addr	=>	host.ip6_addr,
+				:distance	=>	host.distance,
+				:uptime_secs	=>	host.uptime_seconds,
+				:uptime_lastboot	=>	host.uptiume_lastboot
+			}
+			rtv = insert_host_record(params)
 			#if rtv != 0; raise "There was a problem inserting the host record.  RTV: #{rtv}".red; end
 		elsif (hid.is_a?(Integer) || hid.is_a?(Fixnum)) && hid > 0
 			# check other scans (get hid/sid)
@@ -353,7 +369,18 @@ else
 		if seq_record_exists(hid,sid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values)
 			puts "sequencing record exists for scan and host.  skipping...." if @verbose
 		else
-			rtv = insert_seq_record(hid,sid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values,host.ipidsequence_class,host.ipidsequence_values,host.tcptssequence_class,host.tcptssequence_values)
+			params = {
+				:hid => hid,
+				:sid => sid,
+				:tcpsequence_class => host.tcpsequence_class,
+				:tcpsequence_index => host.tcpsequence_index,
+				:tcpsequence_values => host.tcpsequence_values,
+				:ipidsequence_class => host.ipidsequence_class,
+				:ipidsequence_values => host.ipidsequence_class,
+				:tcptssequence_class => host.tcptssequence_class,
+				:tsptssequence_values => host.tcptssequence_values
+			}
+			rtv = insert_seq_record(params)
 			puts "return value for seq record insert: #{rtv}" if @verbose
 		end	
 		[:tcp, :udp].each do |type|
@@ -365,7 +392,26 @@ else
 					if !port.service.fingerprint.nil? && port.service.fingerprint != ""
 						port.service.fingerprint.gsub!(/\'/, "&#39;")
 					end
-					rtv = insert_ports_record(hid,sid,port.num,'',port.state,port.service.name,port.service.tunnel,port.service.product,port.service.version,port.service.extra,port.service.confidence,port.service.method,port.service.proto,port.service.owner,port.service.rpcnum,port.service.fingerprint)
+					params = {
+						:hid => hid,
+						:sid => sid,
+						:port_num => port.num,
+						'' => '',
+						:state => port.state,
+						:service_name => port.service.name,
+						:service_tunnel => port.service.tunnel,
+						:product => port.service.product,
+						:version => port.service.version,
+						:extra => port.service.extra,
+						:confidence => port.service.confidence,
+						:method => port.service.method,
+						:protocol => port.service.proto,
+						:owner => port.service.owner,
+						:rpcnum => port.service.rpcnum,
+						:fingerprint => port.service.fingerprint
+					}
+					#rtv = insert_ports_record(hid,sid,port.num,'',port.state,port.service.name,port.service.tunnel,port.service.product,port.service.version,port.service.extra,port.service.confidence,port.service.method,port.service.proto,port.service.owner,port.service.rpcnum,port.service.fingerprint)
+					rtv = insert_ports_record(params)
 					puts "return value for ports record insert: #{rtv}" if @verbose
 				end
 			end     # host.getports()
@@ -376,7 +422,18 @@ else
 		if os_record_exists(sid,hid,host.os.name)
 			puts "os record exists for scan and host.  skipping...." if @verbose
 		else
-			rtv = insert_os_record(hid,sid,host.os.name,host.os.osfamily,host.os.osgen,host.os.ostype,host.os.osvendor,host.os.class_accuracy)
+			params = {
+				:hid => hid,
+				:sid => sid,
+				:os_name => host.os.name,
+				:os_family => host.os.osfamily,
+				:os_gen => host.os.osgen,
+				:os_type => host.os.ostype,
+				:os_vendor => host.os.osvendor,
+				:class_accuracy => host.os.class_accuracy
+			}
+			#rtv = insert_os_record(hid,sid,host.os.name,host.os.osfamily,host.os.osgen,host.os.ostype,host.os.osvendor,host.os.class_accuracy)
+			rtv = insert_os_record(params)
 			puts "return value for os record insert: #{rtv}" if @verbose
 		end
 	end     # nmap.hosts loop
