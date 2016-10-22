@@ -89,9 +89,9 @@ end
 
 def create_nmap_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	if @verbose; print "Creating the nmap table....".yellow; end
+	print "Creating the nmap table....".yellow if @verbose
 	rtv = dbh.do("CREATE TABLE IF NOT EXISTS nmap (sid INT NOT NULL AUTO_INCREMENT, version VARCHAR(8), xmlversion VARCHAR(8), args VARCHAR(255), types VARCHAR(255), starttime DATETIME, startstr VARCHAR(255), endtime DATETIME, endstr VARCHAR(255), numservices INT, PRIMARY KEY (sid))")
-	if @verbose; puts "|#{rtv}|#{$!}|".red; end
+	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -109,9 +109,9 @@ end
 
 def create_hosts_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	if @verbose; print "Creating the host table....".yellow; end
+	print "Creating the host table....".yellow if @verbose
 	rtv = dbh.do("CREATE TABLE IF NOT EXISTS hosts (sid INT NOT NULL, hid INT NOT NULL AUTO_INCREMENT, ip4 VARCHAR(16), ip4num VARCHAR(255), hostname VARCHAR(255), status VARCHAR(255), tcpcount INT, udpcount INT, mac VARCHAR(24), vendor VARCHAR(255), ip6 VARCHAR(64), distance INT, uptime VARCHAR(255), upstr VARCHAR(255), PRIMARY KEY(hid))")
-	if @verbose; puts "|#{rtv}|#{$!}|".red; end
+	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -125,9 +125,9 @@ end
 
 def create_seq_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	if @verbose; print "Creating the sequencing table....".yellow; end
+	print "Creating the sequencing table....".yellow if @verbose
 	rtv = dbh.do("CREATE TABLE IF NOT EXISTS sequencing (hid INT NOT NULL, sid INT NOT NULL, tcpclass VARCHAR(255), tcpindex VARCHAR(255), tcpvalues VARCHAR(255), ipclass VARCHAR(255), ipvalues VARCHAR(255), tcptclass VARCHAR(255), tcptvalues VARCHAR(255))")
-	if @verbose; puts "|#{rtv}|#{$!}|".red; end
+	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -141,9 +141,9 @@ end
 
 def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	if @verbose; print "Creating the ports table....".yellow; end
+	print "Creating the ports table....".yellow if @verbose
 	rtv = dbh.do("CREATE TABLE IF NOT EXISTS ports (hid INT NOT NULL, sid INT NOT NULL, port INT, type VARCHAR(255), state VARCHAR(255), name VARCHAR(255), tunnel VARCHAR(255), product VARCHAR(255), version VARCHAR(255), extra VARCHAR(255), confidence INT, method VARCHAR(255), proto VARCHAR(255), owner VARCHAR(255), rpcnum VARCHAR(255), fingerprint TEXT)")
-	if @verbose; puts "|#{rtv}|#{$!}|".red; end
+	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -157,9 +157,9 @@ end
 
 def create_os_table(db=@database,host=@host,username=@user,passwd=@pass)
 	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	if @verbose; print "Creating the os table....".yellow; end
+	print "Creating the os table....".yellow if @verbose
 	rtv = dbh.do("CREATE TABLE IF NOT EXISTS os (hid INT NOT NULL, sid INT NOT NULL, name VARCHAR(255), family VARCHAR(255), generation VARCHAR(255), type VARCHAR(255), vendor VARCHAR(255), accuracy INT)")
-	if @verbose; puts "|#{rtv}|#{$!}|".red; end
+	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
