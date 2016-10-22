@@ -134,7 +134,7 @@ end
 
 def insert_seq_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:tcpsequence_class]}','#{p[:tcpsequence_index]}','#{p[:tcpsequence_values]}','#{p[:ipidsequence_class]}','#{p[:ipidsequence_values]}','#{p[:tcptssequence_class}','#{ip[:tcptssequence_values]}')")
+	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:tcpsequence_class]}','#{p[:tcpsequence_index]}','#{p[:tcpsequence_values]}','#{p[:ipidsequence_class]}','#{p[:ipidsequence_values]}','#{p[:tcptssequence_class]}','#{ip[:tcptssequence_values]}')")
 	dbh.disconnect
 	return rtv
 end
