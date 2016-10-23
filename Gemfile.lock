@@ -10,6 +10,7 @@ GEM
     deprecated (2.0.1)
     mysql (2.9.1)
     nmap-parser (0.3.5)
+    rake (11.3.0)
     sqlite3 (1.3.11)
     writeexcel (1.0.5)
 
@@ -21,6 +22,7 @@ DEPENDENCIES
   dbd-mysql
   dbi
   nmap-parser
+  rake
   sqlite3
   writeexcel
 
