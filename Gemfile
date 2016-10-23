@@ -7,3 +7,5 @@ gem 'dbi'
 gem 'nmap-parser'
 gem 'writeexcel'
 gem 'sqlite3'
+# required for Travis-CI
+gem 'rake'
