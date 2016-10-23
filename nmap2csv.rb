@@ -55,7 +55,7 @@ def usage(noexit=false)
 
 EOS
 	unless noexit
-		exit 1
+		exit 0
 	end
 end
 
