@@ -160,7 +160,7 @@ def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 	end
 	return rtv
 end
-
+	
 def check_scan_record(args, starttime, endtime)
 	return_val = false
 	starttime = DateTime.strptime(starttime.to_s, "%s")
@@ -189,7 +189,7 @@ def check_host_record(sid,ip4,hostname)
 	return return_val
 end
 
-def seq_record_exists(hid,sid,tcpseq_class,tcpseq_index,tcpseq_values)
+def seq_record_exists(hid,sid,tcpseq_class)
 	return_val = false
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	stmt = dbh.prepare("SELECT hid FROM sequencing WHERE hid='#{hid}' AND sid='#{sid}' AND tcpclass='#{tcpseq_class}'")
@@ -329,7 +329,7 @@ else
 		end
 		### check for a seq record with this scan id (sid) and
 		### tcpseuqence_class, tcpsequence_index, tcpsequence_values
-		if seq_record_exists(hid,sid,host.tcpsequence_class,host.tcpsequence_index,host.tcpsequence_values)
+		if seq_record_exists(hid,sid,host.tcpsequence_class)
 			puts "sequencing record exists for scan and host.  skipping...." if @verbose
 		else
 			params = {
