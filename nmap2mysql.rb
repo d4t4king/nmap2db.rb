@@ -154,8 +154,8 @@ def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 	end
 	t = [ 'nmap', 'hosts', 'ports', 'sequencing', 'os' ]
 	dbinfo = { :database => @database, :host => @host, :user => @user, :pass => @pass }
-	t.each do |table|
-		rtv = create_table(t, dbinfo)
+	t.each do |tbl|
+		rtv = create_table(tbl, dbinfo)
 		puts "(#{t}) create_table:RTV: #{rtv}".red if @verbose
 	end
 	return rtv
