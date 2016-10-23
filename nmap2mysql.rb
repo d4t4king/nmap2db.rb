@@ -86,11 +86,18 @@ if @verbose && @quiet
 	raise "Can't be verbose and quiest at the same time.  Pick one."
 end
 
+@table_sql = {
+	'nmap'	=>	'CREATE TABLE IF NOT EXISTS nmap (sid INT NOT NULL AUTO_INCREMENT, version VARCHAR(8), xmlversion VARCHAR(8), args VARCHAR(255), types VARCHAR(255), starttime DATETIME, startstr VARCHAR(255), endtime DATETIME, endstr VARCHAR(255), numservices INT, PRIMARY KEY (sid))',
+	'hosts'	=>	'CREATE TABLE IF NOT EXISTS hosts (sid INT NOT NULL, hid INT NOT NULL AUTO_INCREMENT, ip4 VARCHAR(16), ip4num VARCHAR(255), hostname VARCHAR(255), status VARCHAR(255), tcpcount INT, udpcount INT, mac VARCHAR(24), vendor VARCHAR(255), ip6 VARCHAR(64), distance INT, uptime VARCHAR(255), upstr VARCHAR(255), PRIMARY KEY(hid))',
+	'sequencing'	=>	'CREATE TABLE IF NOT EXISTS sequencing (hid INT NOT NULL, sid INT NOT NULL, tcpclass VARCHAR(255), tcpindex VARCHAR(255), tcpvalues VARCHAR(255), ipclass VARCHAR(255), ipvalues VARCHAR(255), tcptclass VARCHAR(255), tcptvalues VARCHAR(255))',
+	'port'	=>	'CREATE TABLE IF NOT EXISTS ports (hid INT NOT NULL, sid INT NOT NULL, port INT, type VARCHAR(255), state VARCHAR(255), name VARCHAR(255), tunnel VARCHAR(255), product VARCHAR(255), version VARCHAR(255), extra VARCHAR(255), confidence INT, method VARCHAR(255), proto VARCHAR(255), owner VARCHAR(255), rpcnum VARCHAR(255), fingerprint TEXT)',
+	'os'	=>	'CREATE TABLE IF NOT EXISTS os (hid INT NOT NULL, sid INT NOT NULL, name VARCHAR(255), family VARCHAR(255), generation VARCHAR(255), type VARCHAR(255), vendor VARCHAR(255), accuracy INT)',
+}
 
-def create_nmap_table(db=@database,host=@host,username=@user,passwd=@pass)
-	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	print "Creating the nmap table....".yellow if @verbose
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS nmap (sid INT NOT NULL AUTO_INCREMENT, version VARCHAR(8), xmlversion VARCHAR(8), args VARCHAR(255), types VARCHAR(255), starttime DATETIME, startstr VARCHAR(255), endtime DATETIME, endstr VARCHAR(255), numservices INT, PRIMARY KEY (sid))")
+def create_table(table,dbinfo)
+	dbh = DBI.connect("DBI:Mysql:#{dbinfo[:database]}:#{dbinfo[:host]}", dbinfo[:user], dbinfo[:pass])
+	print "Creating the #{table} table....".yellow if @verbose
+	rtv = dbh.do(@table_sql[table])
 	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
@@ -100,18 +107,7 @@ def insert_nmap_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	starttime = DateTime.strptime(p[:starttime].to_s, "%s") if p[:starttime].to_s =~ /^\d+$/
 	endtime = DateTime.strptime(p[:endtime].to_s, "%s") if p[:endtime].to_s =~ /^\d+/
-	# not sure why the starttime and endtime have the symbol reference.  code climate doesn't like it.
-	#rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{version}','#{xmlversion}','#{args}','#{types}','#{starttime{:db}}','#{startstr}','#{endtime{:db}}','#{endstr}','#{numservices}')")
 	rtv = dbh.do("INSERT INTO nmap (version,xmlversion,args,types,starttime,startstr,endtime,endstr,numservices) VALUES ('#{p[:version]}','#{p[:xmlversion]}','#{p[:args]}','#{p[:types]}','#{starttime}','#{p[:startstr]}','#{endtime}','#{p[:endstr]}','#{p[:numservices]}')")
-	dbh.disconnect
-	return rtv
-end
-
-def create_hosts_table(db=@database,host=@host,username=@user,passwd=@pass)
-	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	print "Creating the host table....".yellow if @verbose
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS hosts (sid INT NOT NULL, hid INT NOT NULL AUTO_INCREMENT, ip4 VARCHAR(16), ip4num VARCHAR(255), hostname VARCHAR(255), status VARCHAR(255), tcpcount INT, udpcount INT, mac VARCHAR(24), vendor VARCHAR(255), ip6 VARCHAR(64), distance INT, uptime VARCHAR(255), upstr VARCHAR(255), PRIMARY KEY(hid))")
-	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -123,27 +119,9 @@ def insert_host_record(p)
 	return rtv
 end
 
-def create_seq_table(db=@database,host=@host,username=@user,passwd=@pass)
-	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	print "Creating the sequencing table....".yellow if @verbose
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS sequencing (hid INT NOT NULL, sid INT NOT NULL, tcpclass VARCHAR(255), tcpindex VARCHAR(255), tcpvalues VARCHAR(255), ipclass VARCHAR(255), ipvalues VARCHAR(255), tcptclass VARCHAR(255), tcptvalues VARCHAR(255))")
-	puts "|#{rtv}|#{$!}|".red if @verbose
-	dbh.disconnect
-	return rtv
-end
-
 def insert_seq_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	rtv = dbh.do("INSERT INTO sequencing (hid,sid,tcpclass,tcpindex,tcpvalues,ipclass,ipvalues,tcptclass,tcptvalues) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:tcpsequence_class]}','#{p[:tcpsequence_index]}','#{p[:tcpsequence_values]}','#{p[:ipidsequence_class]}','#{p[:ipidsequence_values]}','#{p[:tcptssequence_class]}','#{ip[:tcptssequence_values]}')")
-	dbh.disconnect
-	return rtv
-end
-
-def create_ports_table(db=@database,host=@host,username=@user,passwd=@pass)
-	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	print "Creating the ports table....".yellow if @verbose
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS ports (hid INT NOT NULL, sid INT NOT NULL, port INT, type VARCHAR(255), state VARCHAR(255), name VARCHAR(255), tunnel VARCHAR(255), product VARCHAR(255), version VARCHAR(255), extra VARCHAR(255), confidence INT, method VARCHAR(255), proto VARCHAR(255), owner VARCHAR(255), rpcnum VARCHAR(255), fingerprint TEXT)")
-	puts "|#{rtv}|#{$!}|".red if @verbose
 	dbh.disconnect
 	return rtv
 end
@@ -155,16 +133,6 @@ def insert_ports_record(p)
 	return rtv
 end
 
-def create_os_table(db=@database,host=@host,username=@user,passwd=@pass)
-	dbh = DBI.connect("DBI:Mysql:#{db}:#{host}", username, passwd)
-	print "Creating the os table....".yellow if @verbose
-	rtv = dbh.do("CREATE TABLE IF NOT EXISTS os (hid INT NOT NULL, sid INT NOT NULL, name VARCHAR(255), family VARCHAR(255), generation VARCHAR(255), type VARCHAR(255), vendor VARCHAR(255), accuracy INT)")
-	puts "|#{rtv}|#{$!}|".red if @verbose
-	dbh.disconnect
-	return rtv
-end
-
-#def insert_os_record(hid,sid,name,family,generation,type,vendor,accuracy)
 def insert_os_record(p)
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
 	rtv = dbh.do("INSERT INTO os (hid,sid,name,family,generation,type,vendor,accuracy) VALUES ('#{p[:hid]}','#{p[:sid]}','#{p[:os_name]}','#{p[:os_family]}','#{p[:os_gen]}','#{p[:os_type]}','#{p[:os_vendor]}','#{p[:class_accuracy]}')")
@@ -184,17 +152,12 @@ def create_database(db=@database,host=@host,username=@user,passwd=@pass)
 			raise "Looks like the #{db} database doesn't exist yet, and we don't know how to create it."
 		end
 	end
-	rtv = create_nmap_table(@database, @host, @user, @pass)
-	puts "create_nmap_table:RTV: #{rtv}".red if @verbose
-	rtv = create_hosts_table(@database, @host, @user, @pass)
-	puts "create_hosts_table:RTV: #{rtv}".red if @verbose
-	rtv = create_seq_table(@database, @host, @user, @pass)
-	puts "create_seq_table:RTV: #{rtv}".red if @verbose
-	rtv = create_ports_table(@database, @host, @user, @pass)
-	puts "create_ports_table:RTV: #{rtv}".red if @verbose
-	rtv = create_os_table(@database, @host, @user, @pass)
-	puts "create_os_table:RTV: #{rtv}".red if @verbose
-
+	t = [ 'nmap', 'hosts', 'ports', 'sequencing', 'os' ]
+	dbinfo = { :database => @database, :host => @host, :user => @user, :pass => @pass }
+	t.each do |table|
+		rtv = create_table(t, dbinfo)
+		puts "(#{t}) create_table:RTV: #{rtv}".red if @verbose
+	end
 	return rtv
 end
 
