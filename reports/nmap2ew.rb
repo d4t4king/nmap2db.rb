@@ -28,7 +28,7 @@ EOS
 
 end
 	
-ew_bin = '/usr/bin/eyewitness '
+ew_cmd = '/usr/bin/eyewitness '
 
 opts = GetoptLong.new(
 	[ '--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
@@ -75,7 +75,7 @@ end
 parser = Nmap::Parser.new
 
 unless input.nil? || input == ''
-	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+	if File.exist?(input) && !File.directory?(input) && !File.zero?(input)
 		parser.parsefile(input)
 	else
 		if File.directory(input)

@@ -10,7 +10,7 @@ require 'pdfkit'
 def humanize_uptime(uptime)
 	[[60, :seconds], [60, :minutes], [24, :hours], [1000, :days]].map{ |count, name|
 		if uptime.to_i > 0
-			secs, n = uptime.to_i.divmod(count)
+			_secs, n = uptime.to_i.divmod(count)
 			"#{n.to_i} #{name}"
 		end
 	}.compact.reverse.join(' ')
