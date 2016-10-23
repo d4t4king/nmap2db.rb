@@ -1,5 +1,8 @@
 # nmap2db.rb
-[![Code Climate](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/gpa.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb) [![Test Coverage](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/coverage.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb/coverage) [![Issue Count](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/issue_count.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb)
+[![Build Status](https://trafis-ci.org/d4t4king/nmap2db.rb.svg?branch=master)](https://travis-ci.org/d4t4king/nmap2db.rb)
+[![Code Climate](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/gpa.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb) 
+[![Issue Count](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/issue_count.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb)
+[![Test Coverage](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/coverage.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb/coverage) 
 
 This is a (collection of scripts) that will convert nmap *.xml output to various formats.
 
