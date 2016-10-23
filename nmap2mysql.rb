@@ -189,13 +189,17 @@ def check_host_record(sid,ip4,hostname)
 	return return_val
 end
 
-def seq_record_exists(hid,sid,tcpseq_class)
+def record_exists(hid,sid,rec_type,extra)
 	return_val = false
 	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	stmt = dbh.prepare("SELECT hid FROM sequencing WHERE hid='#{hid}' AND sid='#{sid}' AND tcpclass='#{tcpseq_class}'")
+	sql = { 
+		'sequencing' => "SELECT hid FROM sequencing WHERE hid='#{hid}' AND sid='#{sid}' AND tcpclass='#{extra}'",
+		'os'	=>	"SELECT hid FROM os WHERE hid='#{hid}' AND sid='#{sid}' AND name='#{extra}'",
+	}
+	stmt = dbh.prepare(sql[rec_type])
 	stmt.execute
-	while row=stmt.fetch do
-		return_val = true unless row[0].nil? || row[0] == ""
+	while row = stmt.fetch do
+		return_val = true unless row[0].nil?
 		break
 	end
 	stmt.finish
@@ -210,20 +214,6 @@ def port_record_exists(hid,sid,portnum,portstate,portproto)
 	stmt.execute
 	while row=stmt.fetch do
 		return_val = true unless row[0].nil? || row[0] == ""
-		break
-	end
-	stmt.finish
-	dbh.disconnect
-	return return_val
-end
-
-def os_record_exists(sid,hid,osname)
-	return_val = false
-	dbh = DBI.connect("DBI:Mysql:#{@database}:#{@host}", @user, @pass)
-	stmt = dbh.prepare("SELECT hid FROM os WHERE hid='#{hid}' AND sid='#{sid}' AND name='#{osname}'")
-	stmt.execute
-	while row=stmt.fetch do
-		return_val = true unless row[0] .nil? || row[0] == ""
 		break
 	end
 	stmt.finish
@@ -329,7 +319,7 @@ else
 		end
 		### check for a seq record with this scan id (sid) and
 		### tcpseuqence_class, tcpsequence_index, tcpsequence_values
-		if seq_record_exists(hid,sid,host.tcpsequence_class)
+		if record_exists(hid,sid,'sequencing',host.tcpsequence_class)
 			puts "sequencing record exists for scan and host.  skipping...." if @verbose
 		else
 			params = {
@@ -382,7 +372,7 @@ else
 
 		### check for os record with this scan id (sid) and host id (hid) and
 		### os.name
-		if os_record_exists(sid,hid,host.os.name)
+		if record_exists(sid,hid,'os',host.os.name)
 			puts "os record exists for scan and host.  skipping...." if @verbose
 		else
 			params = {
@@ -395,7 +385,6 @@ else
 				:os_vendor => host.os.osvendor,
 				:class_accuracy => host.os.class_accuracy
 			}
-			#rtv = insert_os_record(hid,sid,host.os.name,host.os.osfamily,host.os.osgen,host.os.ostype,host.os.osvendor,host.os.class_accuracy)
 			rtv = insert_os_record(params)
 			puts "return value for os record insert: #{rtv}" if @verbose
 		end
