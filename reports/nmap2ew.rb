@@ -97,5 +97,7 @@ unless input.nil? || input == ''
 	end
 end
 
+puts "TODO: run #{ew_cmd} on the output."
+
 ### ...why'd you have to go and let this die..."
 
