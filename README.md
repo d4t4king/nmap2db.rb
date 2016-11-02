@@ -1,5 +1,27 @@
 # nmap2db.rb
+[![Build Status](https://travis-ci.org/d4t4king/nmap2db.rb.svg?branch=master)](https://travis-ci.org/d4t4king/nmap2db.rb)
+[![Code Climate](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/gpa.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb) 
+[![Issue Count](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/issue_count.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb)
+[![Test Coverage](https://codeclimate.com/github/d4t4king/nmap2db.rb/badges/coverage.svg)](https://codeclimate.com/github/d4t4king/nmap2db.rb/coverage) 
+
 This is a (collection of scripts) that will convert nmap *.xml output to various formats.
+
+## nmap2mysql.rb
+Parses nmap XML scan data and creates/updates a mysql database
+```
+./nmap2mysql.rb [-i|--input] <input file> [-d|--database] <database> [-H|--host] <db_hostname> [-u|--user] <db_username> [-p|--pass] <db_password>
+		[-h|--help] [-v|--verbose] [-q|--quiet]
+
+		-i|--input				Specified the full path to the nmap XML input file.
+		-d|--database				Specifies the name of the mysql database.  Creates it, if it does not exist.
+		-H|--host				Specifies the name of the mysql host.
+		-u|--user				Specifies the name of the user for the mysql database.
+		-p|--pass				Specifies the password for the user specified with '-u'
+		-h|--help				Displays this helpful message, and exits.
+		-v|--verbose				Displays more output than normal.
+		-q|--quiet				Displays less output than normal (or none at all).
+
+```
 ## nmap2sqlite.rb
 Parses nmap XML scan data and creates/updates sqlite3 database.
 
