@@ -325,6 +325,7 @@ else
 			puts "hid is nil, creating...." if @verbose
 			puts "#{sid},#{host.ip4_addr},[ip4num],#{host.hostname},#{host.status},#{host.getports(:tcp).length.to_s},#{host.getports(:udp).length.to_s},#{host.mac_addr},#{host.mac_vendor},#{host.ip6_addr},#{host.distance},#{host.uptime_seconds},#{host.uptime_lastboot}" if @verbose
 			rtv = insert_host_record(sid,host.ip4_addr,"[ip4num]",host.hostname,host.status,host.getports(:tcp).length.to_s,host.getports(:udp).length.to_s,host.mac_addr,host.mac_vendor,host.ip6_addr,host.distance,host.uptime_seconds,host.uptime_lastboot)
+			hid = check_host_record(sid, host.ip4_addr.to_s, host.hostname)
 			#if rtv != 0; raise "There was a problem inserting the host record.  RTV: #{rtv}".red; end
 		elsif (hid.is_a?(Integer) || hid.is_a?(Fixnum)) && hid > 0
 			# check other scans (get hid/sid)
