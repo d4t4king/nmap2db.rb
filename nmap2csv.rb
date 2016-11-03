@@ -105,12 +105,15 @@ EOS
 end
 
 if masscan
-	puts "Attempting to parse as raw XML...." if @verbose
-	xdoc = Nokogiri::XML(input)
-	pp xdoc
+	require_relative "../masscan-parser/masscan/parser.rb"
+	ms = Masscan::Parser.new
+	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+		ms.parsefile(input)
+	end
+	pp ms
 else
 	nmap = Nmap::Parser.new
-	if File.exist?(input) && !File.directory?(input) && !File.zero?(input)
+	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
 		begin
 			nmap.parsefile(input)
 		rescue NoMethodError => nme
