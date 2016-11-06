@@ -106,15 +106,18 @@ end
 
 if masscan
 	require_relative "masscan.rb"
-	hosts = Hash.new
+	hosts = Array.new
+	host_idx = Array.new
 	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
 		file = File.new(input)
 		xdoc = REXML::Document.new(file)
-		xdoc.elements.each("nmaprun/host") { |element|
-			h = Masscan::Host.new(element)
-			pp h
-			hosts[h.ip4_addr] = h
-		}
+		si = Masscan::ScanInfo.new(xdoc)
+		pp si
+		#xdoc.elements.each("nmaprun/host") { |element|
+		#	h = Masscan::Host.new(element)
+		#	host_idx << h.ipv4_addr.to_s unless host_idx.include?(h.ipv4_addr.to_s)
+		#	hosts << h unless host_idx.include?(h.ipv4_addr.to_s
+		#}
 	end
 else
 	nmap = Nmap::Parser.new
