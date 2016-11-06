@@ -27,7 +27,7 @@ require 'getoptlong'
 require 'writeexcel'
 require 'csv'
 require 'date'
-require 'nokogiri'
+require 'rexml/document'
 
 opts = GetoptLong.new(
 	['--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
@@ -105,12 +105,17 @@ EOS
 end
 
 if masscan
-	require_relative "../masscan-parser/masscan/parser.rb"
-	ms = Masscan::Parser.new
+	require_relative "masscan.rb"
+	hosts = Hash.new
 	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
-		ms.parsefile(input)
+		file = File.new(input)
+		xdoc = REXML::Document.new(file)
+		xdoc.elements.each("nmaprun/host") { |element|
+			h = Masscan::Host.new(element)
+			pp h
+			hosts[h.ip4_addr] = h
+		}
 	end
-	pp ms
 else
 	nmap = Nmap::Parser.new
 	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
