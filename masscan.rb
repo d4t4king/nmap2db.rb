@@ -35,15 +35,19 @@ class Masscan::ScanInfo
 	attr_accessor :total_hosts
 	# array of all discovered host objects
 	attr_accessor :hosts
+	# index of hosts,  we want to aggregate ports, 
+	# but not duplicate hosts.  This will facilitate that.
+	attr_accessor :host_index
 
 	def initialize(obj)
 		@hosts = Array.new unless hosts.is_a?(Array)
+		@host_index = Array.new unless host_index.is_a?(Array)
 		host_idx = Array.new
 		host_port_idx = Hash.new
 		if obj.is_a?(REXML::Document)
 			nmaprun = obj.elements["nmaprun"]
 			@scanner = nmaprun.attributes["scanner"]
-			@start_time = DateTime.strptime(nmaprun.attributes["start"].to_s, '%s')
+			@start_time = DateTime.strptime(nmaprun.attributes["start"].to_s, '%Q')
 			@scanner_version = nmaprun.attributes["version"]
 			@xml_version = nmaprun.attributes["xmloutputversion"]
 			scaninfo = obj.elements["nmaprun"].elements["scaninfo"]
@@ -52,13 +56,21 @@ class Masscan::ScanInfo
 			runstats = obj.elements["nmaprun"].elements["runstats"]
 			finished = runstats.elements["finished"]
 			hosts = runstats.elements["hosts"]
-			@stop_time = DateTime.strptime(finished.attributes["time"], "%s")
+			@stop_time = DateTime.strptime(finished.attributes["time"], "%Q")
 			@stop_str = finished.attributes["timestr"]
 			@elapsed = finished.attributes["elapsed"]
 			@hosts_up = hosts.attributes["up"].to_i
 			@hosts_down = hosts.attributes["down"].to_i
 			@total_hosts = hosts.attributes["total"].to_i
-			
+			REXML::XPath.each(nmaprun, "host") do |h|
+				host = Masscan::Host.new(h)
+				if !@host_index.include?(host.ip4_addr)
+					@hosts.push(host)
+				end
+				# Populate the index after the array of objects, or
+				# else we'll never populate the array of objects
+				@host_index.push(host.ip4_addr) unless @host_index.include?(host.ip4_addr)
+			end	
 		else
 			raise "Unrecognized object type: #{obj.class}"
 		end
@@ -76,6 +88,8 @@ class Masscan::Host
 	attr_accessor :stop_time
 	# ports
 	attr_accessor :ports
+	# port_index
+	attr_accessor :port_index
 
 	alias ipv4_addr ip4_addr
 
@@ -88,19 +102,24 @@ class Masscan::Host
 	end
 
 	def initialize(obj)
+		@ports = Array.new unless @ports.is_a?(Array)
+		@port_index = Array.new unless @port_index.is_a?(Array)
 		if obj.is_a?(REXML::Element)
-			address = obj.elements["address"]
-			addrtype = address.attributes['addrtype']
+			addrtype = obj.elements["address"].attributes['addrtype']
 			case addrtype
 			when "ipv4"
 				@ip4_addr = obj.elements["address"].attributes["addr"]
 			end
 			@stop_time = DateTime.strptime(obj.attributes["endtime"].to_s, '%s')
 			# masscan only records one port per host record, 
-			# but @ports should be an array
+			# but @ports should be an array because we'll 
+			# aggregate them later
 			@ports = Array.new unless @ports.is_a?(Array)
 			p = Masscan::Host::Port.new(obj.elements["ports"])
-			@ports.push(p)
+			@ports.push(p) unless @port_index.include?(p.port_id)
+			# Populate the index after the array of objects, or
+			# else we'll never populate the array of objects
+			@port_index.push(p.port_id) unless @port_index.include?(p.port_id)
 		end
 	end
 
