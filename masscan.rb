@@ -50,7 +50,7 @@ class Masscan::ScanInfo
 		if obj.is_a?(REXML::Document)
 			nmaprun = obj.elements["nmaprun"]
 			@scanner = nmaprun.attributes["scanner"]
-			@start_time = DateTime.strptime(nmaprun.attributes["start"].to_s, '%Q')
+			@start_time = DateTime.strptime(nmaprun.attributes["start"], '%Q')
 			@scanner_version = nmaprun.attributes["version"]
 			@xml_version = nmaprun.attributes["xmloutputversion"]
 			scaninfo = obj.elements["nmaprun"].elements["scaninfo"]

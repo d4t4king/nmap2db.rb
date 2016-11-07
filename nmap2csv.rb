@@ -112,16 +112,10 @@ if masscan
 		file = File.new(input)
 		xdoc = REXML::Document.new(file)
 		@si = Masscan::ScanInfo.new(xdoc)
-		#pp si
-		#xdoc.elements.each("nmaprun/host") { |element|
-		#	h = Masscan::Host.new(element)
-		#	host_idx << h.ipv4_addr.to_s unless host_idx.include?(h.ipv4_addr.to_s)
-		#	hosts << h unless host_idx.include?(h.ipv4_addr.to_s
-		#}
 	end
 	CSV.open(output, 'wb') do |csv|
 		summary_header_row = Array.new
-		summary_header_row = ['IP','Hostname','Host Status','Open Ports','Start Time - Epoch', 'Start Date', 'End Time - Epoch', 'End Date', 'Duration']
+		summary_header_row = ['IP','Host Status','Open Ports','Start Time - Epoch', 'Start Date', 'End Time - Epoch', 'End Date', 'Duration']
 		csv << summary_header_row
 		@si.hosts.each do |h|
 			host_data_row = [ h.ipv4_addr.to_s, h.status, h.port_list, @si.start_time.strftime('%s').to_s, @si.start_time.to_s, h.stop_time.strftime('%s').to_s, h.stop_time.to_s, @si.elapsed.to_s ] 
