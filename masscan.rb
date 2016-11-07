@@ -35,6 +35,8 @@ class Masscan::ScanInfo
 	attr_accessor :total_hosts
 	# array of all discovered host objects
 	attr_accessor :hosts
+	# Hash of hosts
+	attr_accessor :host_dict
 	# index of hosts,  we want to aggregate ports, 
 	# but not duplicate hosts.  This will facilitate that.
 	attr_accessor :host_index
@@ -42,6 +44,7 @@ class Masscan::ScanInfo
 	def initialize(obj)
 		@hosts = Array.new unless hosts.is_a?(Array)
 		@host_index = Array.new unless host_index.is_a?(Array)
+		@host_dict = Hash.new unless host_dict.is_a?(Hash)
 		host_idx = Array.new
 		host_port_idx = Hash.new
 		if obj.is_a?(REXML::Document)
@@ -64,12 +67,20 @@ class Masscan::ScanInfo
 			@total_hosts = hosts.attributes["total"].to_i
 			REXML::XPath.each(nmaprun, "host") do |h|
 				host = Masscan::Host.new(h)
-				if !@host_index.include?(host.ip4_addr)
+				if @host_index.include?(host.ip4_addr)
+					p = h.elements['ports'].elements['port'].attributes['portid']
+					#puts "|#{p}|"
+					if !@host_dict[host.ip4_addr].port_index.include?(p)
+						pxml = h.elements['ports']
+						@host_dict[host.ip4_addr].add_port(pxml)
+					end
+				else
 					@hosts.push(host)
+					# Populate the index after the array of objects, or
+					# else we'll never populate the array of objects
+					@host_index.push(host.ip4_addr) unless @host_index.include?(host.ip4_addr)
+					@host_dict[host.ip4_addr] = host unless @host_dict.keys.include?(host.ip4_addr)
 				end
-				# Populate the index after the array of objects, or
-				# else we'll never populate the array of objects
-				@host_index.push(host.ip4_addr) unless @host_index.include?(host.ip4_addr)
 			end	
 		else
 			raise "Unrecognized object type: #{obj.class}"
@@ -92,13 +103,17 @@ class Masscan::Host
 	attr_accessor :port_index
 
 	alias ipv4_addr ip4_addr
+	alias port_list port_index
 
 	# Returns the IPv4 address of the host
 	def addr
 		@ip4_addr
 	end
 
-	def addport(obj)
+	def add_port(obj)
+		port = Masscan::Host::Port.new(obj)
+		@ports.push(port) unless @port_index.include?(port.port_id)
+		@port_index.push(port.port_id) unless @port_index.include?(port.port_id)
 	end
 
 	def initialize(obj)
@@ -120,6 +135,7 @@ class Masscan::Host
 			# Populate the index after the array of objects, or
 			# else we'll never populate the array of objects
 			@port_index.push(p.port_id) unless @port_index.include?(p.port_id)
+			@status = "up"
 		end
 	end
 
@@ -134,7 +150,7 @@ class Masscan::Host::Port
 	# port state
 	attr_accessor :state
 	# reason for state
-	attr_accessor :reasn
+	attr_accessor :reason
 	# reason ttl
 	attr_accessor :reason_ttl
 
