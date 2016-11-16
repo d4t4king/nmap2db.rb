@@ -14,7 +14,6 @@ engines:
       - 18fd262946a59371c0548eab24b038e6
       - 2bfb352db410dbecc9f99441323d4b6b
       - 25f90bab52a95b31c595ef4473de9a97
-      - 9aa1739c8fbe104fda2d98030f53519f
   fixme:
     enabled: true
     exclude_fingerprints:
@@ -26,6 +25,9 @@ engines:
     exclude_fingerprints:
       - 706a8985b81b445c765520fe6a298020
       - 2a78c3d36a71941f51c48a6e6e132c1c
+      - 26cb6938dc9573ad35ea75c16b2fbbc9
+      - 9aa1739c8fbe104fda2d98030f53519f
+      - 4860449d50e55b476dba2607119c6e95
 ratings:
   paths:
   - Gemfile.lock
