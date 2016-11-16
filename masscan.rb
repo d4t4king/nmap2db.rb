@@ -42,11 +42,9 @@ class Masscan::ScanInfo
 	attr_accessor :host_index
 
 	def initialize(obj)
-		@hosts = Array.new unless hosts.is_a?(Array)
-		@host_index = Array.new unless host_index.is_a?(Array)
-		@host_dict = Hash.new unless host_dict.is_a?(Hash)
-		host_idx = Array.new
-		host_port_idx = Hash.new
+		@hosts = Array.new
+		@host_index = Array.new
+		@host_dict = Hash.new
 		if obj.is_a?(REXML::Document)
 			nmaprun = obj.elements["nmaprun"]
 			@scanner = nmaprun.attributes["scanner"]
