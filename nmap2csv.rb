@@ -106,9 +106,7 @@ end
 
 if masscan
 	require_relative "masscan.rb"
-	hosts = Array.new
-	host_idx = Array.new
-	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+	if File.exist?(input) && !File.directory?(input) && !File.zero?(input)
 		file = File.new(input)
 		xdoc = REXML::Document.new(file)
 		@si = Masscan::ScanInfo.new(xdoc)
@@ -125,7 +123,7 @@ if masscan
 	end
 else
 	nmap = Nmap::Parser.new
-	if File.exists?(input) && !File.directory?(input) && !File.zero?(input)
+	if File.exist?(input) && !File.directory?(input) && !File.zero?(input)
 		begin
 			nmap.parsefile(input)
 		rescue NoMethodError => nme
