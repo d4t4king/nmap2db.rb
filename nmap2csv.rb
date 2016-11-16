@@ -112,7 +112,6 @@ if masscan
 		@si = Masscan::ScanInfo.new(xdoc)
 	end
 	CSV.open(output, 'wb') do |csv|
-		summary_header_row = Array.new
 		summary_header_row = ['IP','Host Status','Open Ports','Start Time - Epoch', 'Start Date', 'End Time - Epoch', 'End Date', 'Duration']
 		csv << summary_header_row
 		@si.hosts.each do |h|
