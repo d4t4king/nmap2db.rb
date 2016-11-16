@@ -120,43 +120,10 @@ def create_table(table,db_file=@database)
 	end
 end
 
-def create_os_table( db_file = @database )
-	db = SQLite3::Database.new(db_file)
-	notable = false
-	r = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='os'")
-	r.flatten!
-	if r[0].nil?
-		notable = true
-	elsif r[0] == "os"
-		puts "os table exists".blue if @verbose
-		return 0
-	else
-		puts "Unexpected result:".red
-		pp r
-		puts
-		return -1
-	end
-
-	if (notable)
-		print "Creating the os table...".yellow if @verbose
-		rtv = db.execute("CREATE TABLE os(hid INTEGER, name TEXT, family TEXT, generation TEXT, type TEXT, vendor TEXT, accuracy INTEGER)")
-		puts "|#{rtv.length}|#{$!}|".red if @verbose
-	else
-		puts "We shouldn't be here....ever.".blue.on_white.blink
-		pp notable
-	end
-end
-
 def create_database( i_db_file = @database )
-	create_nmap_table(i_db_file)
-
-	create_hosts_table(i_db_file)
-
-	create_seq_table(i_db_file)
-
-	create_ports_table(i_db_file)
-
-	create_os_table(i_db_file)
+	[ "nmap", "hosts", "sequencing", "ports", "os" ].each do |tbl|
+		create_table(tbl, i_db_file)
+	end
 end
 
 def check_scan_record(args, starttime, endtime)
