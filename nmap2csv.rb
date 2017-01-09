@@ -176,8 +176,9 @@ else
 					#ws_ports.write("G#{j}",port.scripts.to_s)
 					script_str = ''
 					port.scripts do |script|
-						script.output.tr!(/\n/, " ")		# substitute all new lines with spaces
-						script.output.tr!(/\s+/, " ")		# eliminate spaces of >1 clump
+						puts script.output.class.to_s.yellow.bold
+						script.output.to_s.gsub!(/\n/, " ")		# substitute all new lines with spaces
+						script.output.to_s.gsub!(/\s+/, " ")		# eliminate spaces of >1 clump
 						script_str += "* #{script.id}: #{script.output}\n"
 					end
 					ws_ports.write("G#{j}",script_str.to_s)
