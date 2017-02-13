@@ -18,7 +18,7 @@ def show_help()
 -d|--database			Query targets from the specified sqlite/nmap database.  Expects the schema
 				defined in other scripts in this repo.
 -b|--binary			Path to the eyewitness script/binary, in case not in expected location.
-				Expected location is in /usr/bin/(eyewitness).  *The file is not actually likelt
+				Expected location is in /usr/bin/(eyewitness).  *The file is not actually likely
 				to be a binary, but a Python script.  It doesn't really matter, so long 
 				as the python script acts like a binary.
 
