@@ -194,7 +194,21 @@ else
 				summary_header_row = ['IP','Hostname','OS Guess','Accuracy','Host Status','Open Ports','Start Time - Epoch', 'Start Date', 'End Time - Epoch', 'End Date', 'Duration','MAC Address','MAC Vendor','Scripts']
 				csv << summary_header_row
 				nmap.hosts(status) do |host|
-					host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_i.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+					puts "Start: #{host.starttime.to_s}" if @verbose
+					puts "Finish: #{host.endtime.to_s}" if @verbose
+					startdate = ''
+					enddate = ''
+					if host.starttime.nil?
+						startdate = nmap.session.start_time
+					else
+						startdate = host.starttime
+					end
+					if host.endtime.nil?
+						enddate = nmap.session.stop_time
+					else
+						enddate = host.endtime
+					end
+					host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_i.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, startdate.to_s, DateTime.strptime(startdate.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, enddate.to_s, DateTime.strptime(enddate.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
 					csv << host_data_row
 					puts host_data_row.to_s if @verbose
 				end
