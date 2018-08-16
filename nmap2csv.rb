@@ -50,7 +50,7 @@ def usage(noexit=false)
 -h|--help			Displays this helpful message, and exits.
 -v|--verbose			Displays more output than normal.
 -q|--quiet			Displays less output than normal.
--m|--masscan		This option tells the script to parse the XML as masscan XML, rather than true nmap XML.
+-m|--masscan			This option tells the script to parse the XML as masscan XML, rather than true nmap XML.
 -E|--excel			Writes the output to am Excel spreadsheet/workbook, rather than the
 					simpler CSV format.
 -U|--up				Only print/write data for hosts that are "up".
@@ -162,7 +162,13 @@ else
 			ws_ports.write_row('A1',ports_header_row)
 			i = 2; j = 2
 			nmap.hosts(status) do |host|
-				host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %T%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d%Y %T%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+				begin
+					host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %T%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d%Y %T%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+				rescue ArgumentError => ae
+					puts ae.message.to_s.red
+					pp host.starttime.to_s.red
+					pp host.endtime.to_s.red
+				end
 				puts host_data_row.to_s if @verbose
 				ws_summary.write("A#{i}",host_data_row)
 				host.getports([:tcp,:udp],"open") do |port|
@@ -194,7 +200,11 @@ else
 				summary_header_row = ['IP','Hostname','OS Guess','Accuracy','Host Status','Open Ports','Start Time - Epoch', 'Start Date', 'End Time - Epoch', 'End Date', 'Duration','MAC Address','MAC Vendor','Scripts']
 				csv << summary_header_row
 				nmap.hosts(status) do |host|
-					host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_i.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+					if !host.starttime.nil? and !host.endtime.nil?
+						host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_i.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, DateTime.strptime(host.starttime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, host.endtime.to_s, DateTime.strptime(host.endtime.to_s, '%s').strftime("%m/%d/%Y %H:%M:%S%z").to_s, (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+					else
+						host_data_row = [ host.ipv4_addr.to_s, host.hostname.to_s, host.os.name.to_s, host.os.name_accuracy.to_i.to_s, host.status.to_s, host.getportlist([:tcp,:udp], "open").to_s, host.starttime.to_s, "", host.endtime.to_s, "", (host.endtime.to_i - host.starttime.to_i).to_s, host.mac_addr.to_s, host.mac_vendor.to_s ]
+					end
 					csv << host_data_row
 					puts host_data_row.to_s if @verbose
 				end
