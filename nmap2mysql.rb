@@ -303,7 +303,7 @@ else
 				:ipv6_addr	=>	host.ip6_addr,
 				:distance	=>	host.distance,
 				:uptime_secs	=>	host.uptime_seconds,
-				:uptime_lastboot	=>	host.uptiume_lastboot
+				:uptime_lastboot	=>	host.uptime_lastboot
 			}
 			rtv = insert_host_record(params)
 			#if rtv != 0; raise "There was a problem inserting the host record.  RTV: #{rtv}".red; end
