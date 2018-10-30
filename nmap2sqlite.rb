@@ -18,12 +18,13 @@
 #
 ###############################################################################
 
+require 'pp'
+require 'ipaddr'
+require 'sqlite3'
 require 'rubygems'
 require 'colorize'
-require 'pp'
-require 'nmap/parser'
 require 'getoptlong'
-require 'sqlite3'
+require 'nmap/parser'
 
 opts = GetoptLong.new(
 	['--input', '-i', GetoptLong::REQUIRED_ARGUMENT ],
@@ -200,7 +201,7 @@ else
 
 		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount,
 			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}',
-			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}',
+			'#{host.ip4_addr}', '#{IPAddr.new(host.ip4_addr).to_i}', '#{host.hostname}', '#{host.status}',
 			'#{host.getports(:tcp).length}', '#{host.getports(:udp).length}',
 			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}',
 			'#{host.distance}', '#{host.uptime_seconds}',
