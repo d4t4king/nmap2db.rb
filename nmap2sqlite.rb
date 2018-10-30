@@ -33,7 +33,7 @@ opts = GetoptLong.new(
 	['--help', '-h', GetoptLong::NO_ARGUMENT ],
 )
 
-def usage(noexit=false) 
+def usage(noexit=false)
 	puts <<-EOS
 
 #{$0} [-i|--input] <input file> [-d|--database] <path/to/database/file> [-h|--help] [-v|--verbose] [-q|--quiet]
@@ -198,12 +198,12 @@ else
 			# hid exists, but sid is different, so different hid (the way this db is structured).
 		end		# if hid(int)
 
-		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount, 
-			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}', 
-			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}', 
-			'#{host.getports(:tcp).length}', '#{host.getports(:udp).length}', 
-			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}', 
-			'#{host.distance}', '#{host.uptime_seconds}', 
+		sql2 = %{INSERT INTO hosts (sid, ip4, ip4num, hostname, status, tcpcount,
+			udpcount, mac, vendor, ip6, distance, uptime, upstr) VALUES ('#{sid}',
+			'#{host.ip4_addr}', '[ip4num]', '#{host.hostname}', '#{host.status}',
+			'#{host.getports(:tcp).length}', '#{host.getports(:udp).length}',
+			'#{host.mac_addr}', '#{host.mac_vendor}', '#{host.ip6_addr}',
+			'#{host.distance}', '#{host.uptime_seconds}',
 			'#{host.uptime_lastboot}')}.gsub(/(\t|\s)+/, " ").strip
 		puts "SQL2: #{sql2}".green if @verbose
 		db.execute(sql2)
@@ -224,8 +224,8 @@ else
 		if hid
 			#puts "#{hid}".green
 			sql3 = %{INSERT INTO sequencing (hid, tcpclass, tcpindex, tcpvalues,
-				ipclass, ipvalues, tcptclass, tcptvalues) VALUES ('#{hid}', 
-				'#{host.tcpsequence_class}', '#{host.tcpsequence_index}', 
+				ipclass, ipvalues, tcptclass, tcptvalues) VALUES ('#{hid}',
+				'#{host.tcpsequence_class}', '#{host.tcpsequence_index}',
 				'#{host.tcpsequence_values}', '#{host.ipidsequence_class}',
 				'#{host.ipidsequence_values}', '#{host.tcptssequence_class}',
 				'#{host.tcptssequence_values}')}.gsub(/(\t|\s)+/, " ").strip
@@ -239,10 +239,10 @@ else
 						port.service.fingerprint.gsub!(/\'/, "&#39;")
 					end
 					sql4 = %{INSERT INTO ports (hid, port, type, state, name, tunnel,
-						product, version, extra, confidence, method, proto, owner, 
+						product, version, extra, confidence, method, proto, owner,
 						rpcnum, fingerprint) VALUES ('#{hid}', '#{port.num}', '',
 						'#{port.state}', '#{port.service.name}', '#{port.service.tunnel}',
-						'#{port.service.product}', '#{port.service.version}', 
+						'#{port.service.product}', '#{port.service.version}',
 						'#{port.service.extra}', '#{port.service.confidence}',
 						'#{port.service.method}', '#{port.service.proto}',
 						'#{port.service.owner}', '#{port.service.rpcnum}',
@@ -265,4 +265,3 @@ else
 		end		# if hid
 	end		# nmap.hosts loop
 end		# if nmap.hosts.nil?
-
